@@ -1,0 +1,5 @@
+CREATE TABLE DEPARTAMENTO (
+    id_departamento SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    ubicacion VARCHAR(100) NOT NULL
+);

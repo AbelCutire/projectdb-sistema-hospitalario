@@ -1,0 +1,330 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model camilla {
+  id_camilla              Int                       @id @default(autoincrement())
+  estado                  String                    @db.VarChar(20)
+  id_sala                 Int
+  sala                    sala                      @relation(fields: [id_sala], references: [id_sala], onDelete: NoAction, onUpdate: NoAction, map: "fk_camilla_sala")
+  ingreso_hospitalizacion ingreso_hospitalizacion[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model cita {
+  id_cita        Int           @id @default(autoincrement())
+  fecha          DateTime      @db.Date
+  hora           DateTime      @db.Time(6)
+  estado         String        @db.VarChar(20)
+  id_paciente    Int
+  id_doctor      Int
+  id_consultorio Int
+  consultorio    consultorio   @relation(fields: [id_consultorio], references: [id_consultorio], onDelete: NoAction, onUpdate: NoAction, map: "fk_cita_consultorio")
+  doctor         doctor        @relation(fields: [id_doctor], references: [id_persona], onDelete: NoAction, onUpdate: NoAction, map: "fk_cita_doctor")
+  paciente       paciente      @relation(fields: [id_paciente], references: [id_persona], onDelete: NoAction, onUpdate: NoAction, map: "fk_cita_paciente")
+  diagnostico    diagnostico[]
+}
+
+model compania_seguro {
+  id_compania_seguro Int    @id @default(autoincrement())
+  nombre             String @db.VarChar(100)
+  telefono           String @db.VarChar(20)
+  pago               pago[]
+}
+
+model consultorio {
+  id_consultorio  Int          @id @default(autoincrement())
+  numero          String       @db.VarChar(20)
+  estado          String       @db.VarChar(20)
+  id_departamento Int
+  cita            cita[]
+  departamento    departamento @relation(fields: [id_departamento], references: [id_departamento], onDelete: NoAction, onUpdate: NoAction, map: "fk_consultorio_departamento")
+}
+
+model contrato {
+  id_contrato  Int      @id @default(autoincrement())
+  salario      Decimal  @db.Decimal(10, 2)
+  fecha_inicio DateTime @db.Date
+  fecha_fin    DateTime @db.Date
+  estado       String   @db.VarChar(20)
+  id_empleado  Int      @unique
+  empleado     empleado @relation(fields: [id_empleado], references: [id_persona], onDelete: Cascade, onUpdate: NoAction, map: "fk_contrato_empleado")
+}
+
+model departamento {
+  id_departamento Int           @id @default(autoincrement())
+  nombre          String        @db.VarChar(100)
+  ubicacion       String        @db.VarChar(100)
+  consultorio     consultorio[]
+  sala            sala[]
+}
+
+model diagnostico {
+  id_diagnostico     Int               @id @default(autoincrement())
+  descripcion        String
+  fecha              DateTime          @db.Date
+  id_paciente        Int
+  id_cita            Int
+  id_historiaclinica Int
+  cita               cita              @relation(fields: [id_cita], references: [id_cita], onDelete: NoAction, onUpdate: NoAction, map: "fk_diag_cita")
+  historial_clinico  historial_clinico @relation(fields: [id_historiaclinica], references: [id_historiaclinica], onDelete: NoAction, onUpdate: NoAction, map: "fk_diag_historial")
+  paciente           paciente          @relation(fields: [id_paciente], references: [id_persona], onDelete: NoAction, onUpdate: NoAction, map: "fk_diag_paciente")
+  tratamiento        tratamiento[]
+}
+
+model doctor {
+  id_persona         Int          @id @default(autoincrement())
+  numero_colegiatura String       @unique @db.VarChar(50)
+  id_especialidad    Int
+  cita               cita[]
+  empleado           empleado     @relation(fields: [id_persona], references: [id_persona], onDelete: Cascade, onUpdate: NoAction, map: "fk_doctor_empleado")
+  especialidad       especialidad @relation(fields: [id_especialidad], references: [id_especialidad], onDelete: NoAction, onUpdate: NoAction, map: "fk_doctor_especialidad")
+}
+
+model empleado {
+  id_persona              Int                      @id @default(autoincrement())
+  codigo_empleado         String                   @unique @db.VarChar(50)
+  fecha_ingreso           DateTime                 @db.Date
+  estado_laboral          String                   @db.VarChar(50)
+  contrato                contrato?
+  doctor                  doctor?
+  persona                 persona                  @relation(fields: [id_persona], references: [id_persona], onDelete: Cascade, onUpdate: NoAction, map: "fk_empleado_persona")
+  enfermera               enfermera?
+  personal_administrativo personal_administrativo?
+  personal_limpieza       personal_limpieza?
+}
+
+model enfermera {
+  id_persona Int      @id @default(autoincrement())
+  id_turno   Int
+  empleado   empleado @relation(fields: [id_persona], references: [id_persona], onDelete: Cascade, onUpdate: NoAction, map: "fk_enfermera_empleado")
+  turno      turno    @relation(fields: [id_turno], references: [id_turno], onDelete: NoAction, onUpdate: NoAction, map: "fk_enfermera_turno")
+}
+
+model historial_clinico {
+  id_historiaclinica Int           @id @default(autoincrement())
+  fecha_creacion     DateTime      @db.Date
+  observaciones      String
+  id_paciente        Int           @unique
+  diagnostico        diagnostico[]
+  paciente           paciente      @relation(fields: [id_paciente], references: [id_persona], onDelete: Cascade, onUpdate: NoAction, map: "fk_historial_paciente")
+}
+
+model ingreso_hospitalizacion {
+  id_ingreso_hospitalizacion Int      @id @default(autoincrement())
+  fecha_ingreso              DateTime @db.Date
+  fecha_alta                 DateTime @db.Date
+  id_paciente                Int
+  id_camilla                 Int
+  camilla                    camilla  @relation(fields: [id_camilla], references: [id_camilla], onDelete: NoAction, onUpdate: NoAction, map: "fk_ingreso_camilla")
+  paciente                   paciente @relation(fields: [id_paciente], references: [id_persona], onDelete: NoAction, onUpdate: NoAction, map: "fk_ingreso_paciente")
+  pago                       pago[]
+}
+
+model paciente {
+  id_persona              Int                       @id @default(autoincrement())
+  grupo_sanguineo         String                    @db.VarChar(10)
+  alergias                String
+  peso                    Decimal                   @db.Decimal(5, 2)
+  altura                  Decimal                   @db.Decimal(4, 2)
+  contacto_emergencia     String                    @db.VarChar(100)
+  antecedentes_medicos    String
+  estado_paciente         String                    @db.VarChar(50)
+  cita                    cita[]
+  diagnostico             diagnostico[]
+  historial_clinico       historial_clinico?
+  ingreso_hospitalizacion ingreso_hospitalizacion[]
+  persona                 persona                   @relation(fields: [id_persona], references: [id_persona], onDelete: Cascade, onUpdate: NoAction, map: "fk_paciente_persona")
+  pago                    pago[]
+}
+
+model pago {
+  id_pago                    Int                     @id @default(autoincrement())
+  fecha_pago                 DateTime                @db.Date
+  monto_total                Decimal                 @db.Decimal(10, 2)
+  monto_cubierto             Decimal?                @db.Decimal(10, 2)
+  monto_paciente             Decimal                 @db.Decimal(10, 2)
+  metodo_pago                String                  @db.VarChar(50)
+  id_paciente                Int
+  id_ingreso_hospitalizacion Int
+  id_compania_seguro         Int?
+  ingreso_hospitalizacion    ingreso_hospitalizacion @relation(fields: [id_ingreso_hospitalizacion], references: [id_ingreso_hospitalizacion], onDelete: NoAction, onUpdate: NoAction, map: "fk_pago_ingreso")
+  paciente                   paciente                @relation(fields: [id_paciente], references: [id_persona], onDelete: NoAction, onUpdate: NoAction, map: "fk_pago_paciente")
+  compania_seguro            compania_seguro?        @relation(fields: [id_compania_seguro], references: [id_compania_seguro], onDelete: NoAction, onUpdate: NoAction, map: "fk_pago_seguro")
+}
+
+model persona {
+  id_persona       Int       @id @default(autoincrement())
+  nombre           String    @db.VarChar(100)
+  apellido         String    @db.VarChar(100)
+  dni              String    @unique @db.VarChar(20)
+  telefono         String    @db.VarChar(20)
+  direccion        String    @db.VarChar(255)
+  sexo             String    @db.VarChar(20)
+  fecha_nacimiento DateTime  @db.Date
+  empleado         empleado?
+  paciente         paciente?
+  usuario          usuario?
+}
+
+model personal_limpieza {
+  id_persona    Int      @id @default(autoincrement())
+  area_asignada String   @db.VarChar(100)
+  id_turno      Int
+  empleado      empleado @relation(fields: [id_persona], references: [id_persona], onDelete: Cascade, onUpdate: NoAction, map: "fk_limpieza_empleado")
+  turno         turno    @relation(fields: [id_turno], references: [id_turno], onDelete: NoAction, onUpdate: NoAction, map: "fk_limpieza_turno")
+}
+
+model receta {
+  id_receta      Int              @id @default(autoincrement())
+  fecha_emision  DateTime         @db.Date
+  id_tratamiento Int
+  detalle_receta detalle_receta[]
+  tratamiento    tratamiento      @relation(fields: [id_tratamiento], references: [id_tratamiento], onDelete: NoAction, onUpdate: NoAction, map: "fk_receta_tratamiento")
+}
+
+model sala {
+  id_sala         Int          @id @default(autoincrement())
+  tipo_sala       String       @db.VarChar(20)
+  id_departamento Int
+  camilla         camilla[]
+  departamento    departamento @relation(fields: [id_departamento], references: [id_departamento], onDelete: NoAction, onUpdate: NoAction, map: "fk_sala_departamento")
+}
+
+model tratamiento {
+  id_tratamiento Int         @id @default(autoincrement())
+  fecha_inicio   DateTime    @db.Date
+  fecha_fin      DateTime    @db.Date
+  id_diagnostico Int
+  receta         receta[]
+  diagnostico    diagnostico @relation(fields: [id_diagnostico], references: [id_diagnostico], onDelete: NoAction, onUpdate: NoAction, map: "fk_tratamiento_diagnostico")
+}
+
+model accion_terapeutica {
+  id_accion_terapeutica Int           @id @default(autoincrement())
+  tipo                  String        @db.VarChar(100)
+  medicamento           medicamento[]
+}
+
+model detalle_receta {
+  id_receta   Int
+  id_farmacia Int
+  dosis       String   @db.VarChar(50)
+  frecuencia  String   @db.VarChar(50)
+  duracion    String   @db.VarChar(50)
+  farmacia    farmacia @relation(fields: [id_farmacia], references: [id_farmacia], onDelete: NoAction, onUpdate: NoAction, map: "fk_detalle_farmacia")
+  receta      receta   @relation(fields: [id_receta], references: [id_receta], onDelete: Cascade, onUpdate: NoAction, map: "fk_detalle_receta")
+
+  @@id([id_receta, id_farmacia])
+}
+
+model farmacia {
+  id_farmacia    Int              @id @default(autoincrement())
+  nombre         String           @db.VarChar(100)
+  stock          Int
+  precio         Decimal          @db.Decimal(10, 2)
+  detalle_receta detalle_receta[]
+  items_stock          stock[]
+}
+
+model laboratorio_produccion {
+  codigo      Int           @id @default(autoincrement())
+  nombre      String        @db.VarChar(100)
+  descripcion String?       @db.VarChar(255)
+  medicamento medicamento[]
+}
+
+model medicamento {
+  codigo                 Int                    @id @default(autoincrement())
+  nombre                 String                 @db.VarChar(100)
+  descripcion            String?                @db.VarChar(255)
+  id_accion_terapeutica  Int
+  id_monodroga           Int
+  codigo_laboratorio     Int
+  accion_terapeutica     accion_terapeutica     @relation(fields: [id_accion_terapeutica], references: [id_accion_terapeutica], onDelete: NoAction, onUpdate: NoAction, map: "fk_med_accion")
+  laboratorio_produccion laboratorio_produccion @relation(fields: [codigo_laboratorio], references: [codigo], onDelete: NoAction, onUpdate: NoAction, map: "fk_med_lab")
+  monodroga              monodroga              @relation(fields: [id_monodroga], references: [id_monodroga], onDelete: NoAction, onUpdate: NoAction, map: "fk_med_monodroga")
+  stock                  stock[]
+}
+
+model monodroga {
+  id_monodroga Int           @id @default(autoincrement())
+  descripcion  String        @db.VarChar(255)
+  medicamento  medicamento[]
+}
+
+model presentacion {
+  codigo      Int     @id @default(autoincrement())
+  descripcion String  @db.VarChar(100)
+  unidad      String  @db.VarChar(50)
+  stock       stock[]
+}
+
+model stock {
+  item                Int          @id @default(autoincrement())
+  cantidad            Int
+  id_farmacia         Int
+  codigo_medicamento  Int
+  codigo_presentacion Int
+  farmacia            farmacia     @relation(fields: [id_farmacia], references: [id_farmacia], onDelete: NoAction, onUpdate: NoAction, map: "fk_stock_farmacia")
+  medicamento         medicamento  @relation(fields: [codigo_medicamento], references: [codigo], onDelete: NoAction, onUpdate: NoAction, map: "fk_stock_medicamento")
+  presentacion        presentacion @relation(fields: [codigo_presentacion], references: [codigo], onDelete: NoAction, onUpdate: NoAction, map: "fk_stock_presentacion")
+}
+
+model auditoria {
+  id_auditoria       Int       @id @default(autoincrement())
+  id_usuario         Int
+  tabla_afectada     String    @db.VarChar(50)
+  accion_realizada   String    @db.VarChar(50)
+  fecha_hora         DateTime? @default(now()) @db.Timestamp(6)
+  descripcion_cambio String?
+  usuario            usuario   @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "fk_auditoria_usuario")
+}
+
+model especialidad {
+  id_especialidad          Int      @id @default(autoincrement())
+  nombre_especialidad      String   @unique @db.VarChar(100)
+  descripcion_especialidad String?
+  doctor                   doctor[]
+}
+
+model personal_administrativo {
+  id_persona       Int      @id @default(autoincrement())
+  area_asignada    String   @db.VarChar(100)
+  cargo_especifico String   @db.VarChar(100)
+  empleado         empleado @relation(fields: [id_persona], references: [id_persona], onDelete: Cascade, onUpdate: NoAction, map: "fk_admin_empleado")
+}
+
+model rol {
+  id_rol      Int       @id @default(autoincrement())
+  nombre_rol  String    @unique @db.VarChar(50)
+  descripcion String?
+  usuario     usuario[]
+}
+
+model turno {
+  id_turno          Int                 @id @default(autoincrement())
+  nombre_turno      String              @db.VarChar(50)
+  hora_inicio       DateTime            @db.Time(6)
+  hora_fin          DateTime            @db.Time(6)
+  dias_laborables   String              @db.VarChar(100)
+  enfermera         enfermera[]
+  personal_limpieza personal_limpieza[]
+}
+
+model usuario {
+  id_usuario           Int         @id @default(autoincrement())
+  id_persona           Int         @unique
+  id_rol               Int
+  correo_institucional String      @unique @db.VarChar(100)
+  contrasena_hash      String      @db.VarChar(255)
+  estado_activo        Boolean?    @default(true)
+  auditoria            auditoria[]
+  persona              persona     @relation(fields: [id_persona], references: [id_persona], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_persona")
+  rol                  rol         @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
+}
