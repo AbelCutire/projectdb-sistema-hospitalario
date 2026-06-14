@@ -6,7 +6,10 @@ const prisma = new PrismaClient();
 export const getDoctores = async (req: Request, res: Response) => {
   try {
     const doctores = await prisma.doctor.findMany({
-      include: { empleado: true },
+      include: { 
+        especialidad: true, 
+        empleado: { include: { persona: true } } 
+      },
     });
     res.json(doctores);
   } catch (error) {
@@ -31,7 +34,10 @@ export const getDoctorById = async (req: Request, res: Response) => {
     const id = rawId ? parseInt(rawId, 10) : NaN;
     const doctor = await prisma.doctor.findUnique({
       where: { id_persona: id },
-      include: { empleado: true },
+      include: { 
+        especialidad: true, 
+        empleado: { include: { persona: true } } 
+      },
     });
     res.json(doctor);
   } catch (error) {

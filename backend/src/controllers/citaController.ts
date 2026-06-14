@@ -6,7 +6,11 @@ const prisma = new PrismaClient();
 export const getCitas = async (req: Request, res: Response) => {
   try {
     const citas = await prisma.cita.findMany({
-      include: { doctor: true, paciente: true, consultorio: true },
+      include: { 
+        consultorio: true,
+        paciente: { include: { persona: true } },
+        doctor: { include: { especialidad: true, empleado: { include: { persona: true } } } }
+      },
     });
     res.json(citas);
   } catch (error) {
@@ -21,6 +25,7 @@ export const createCita = async (req: Request, res: Response) => {
     });
     res.status(201).json(nuevaCita);
   } catch (error) {
+    console.error("Error en createCita:", error);
     res.status(500).json({ error: 'Error al crear cita' });
   }
 };
@@ -31,7 +36,11 @@ export const getCitaById = async (req: Request, res: Response) => {
     const id = rawId ? parseInt(rawId, 10) : NaN;
     const cita = await prisma.cita.findUnique({
       where: { id_cita: id },
-      include: { doctor: true, paciente: true, consultorio: true },
+      include: { 
+        consultorio: true,
+        paciente: { include: { persona: true } },
+        doctor: { include: { especialidad: true, empleado: { include: { persona: true } } } }
+      },
     });
     res.json(cita);
   } catch (error) {
