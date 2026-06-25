@@ -141,6 +141,7 @@ model paciente {
   ingreso_hospitalizacion ingreso_hospitalizacion[]
   persona                 persona                   @relation(fields: [id_persona], references: [id_persona], onDelete: Cascade, onUpdate: NoAction, map: "fk_paciente_persona")
   pago                    pago[]
+  solicitud_acceso        solicitud_acceso[]
 }
 
 model pago {
@@ -318,13 +319,29 @@ model turno {
 }
 
 model usuario {
-  id_usuario           Int         @id @default(autoincrement())
-  id_persona           Int         @unique
+  id_usuario           Int                 @id @default(autoincrement())
+  id_persona           Int                 @unique
   id_rol               Int
-  correo_institucional String      @unique @db.VarChar(100)
-  contrasena_hash      String      @db.VarChar(255)
-  estado_activo        Boolean?    @default(true)
+  correo_institucional String              @unique @db.VarChar(100)
+  contrasena_hash      String              @db.VarChar(255)
+  estado_activo        Boolean?            @default(true)
   auditoria            auditoria[]
-  persona              persona     @relation(fields: [id_persona], references: [id_persona], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_persona")
-  rol                  rol         @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
+  persona              persona             @relation(fields: [id_persona], references: [id_persona], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_persona")
+  rol                  rol                 @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_rol")
+  solicitudes_enviadas solicitud_acceso[]  @relation("SolicitudDoctor")
+  solicitudes_revisadas solicitud_acceso[] @relation("SolicitudAdmin")
+}
+
+model solicitud_acceso {
+  id_solicitud  Int      @id @default(autoincrement())
+  id_doctor     Int
+  id_paciente   Int
+  estado        String   @default("Pendiente") @db.VarChar(20)
+  motivo        String   @db.VarChar(500)
+  fecha_sol     DateTime @default(now())
+  fecha_resp    DateTime?
+  id_admin      Int?
+  doctor        usuario  @relation("SolicitudDoctor", fields: [id_doctor], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction)
+  admin         usuario? @relation("SolicitudAdmin",  fields: [id_admin],  references: [id_usuario], onDelete: NoAction, onUpdate: NoAction)
+  paciente      paciente @relation(fields: [id_paciente], references: [id_persona], onDelete: NoAction, onUpdate: NoAction)
 }

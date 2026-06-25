@@ -1,0 +1,34 @@
+import { Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+export const getCamillas = async (req: Request, res: Response) => {
+  try {
+    const camillas = await prisma.camilla.findMany({
+      include: { sala: true }
+    });
+    res.json(camillas);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener camillas' });
+  }
+};
+
+export const updateCamilla = async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { estado } = req.body;
+    
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'ID inválido' });
+    }
+
+    const camillaActualizada = await prisma.camilla.update({
+      where: { id_camilla: id },
+      data: { estado }
+    });
+    res.json(camillaActualizada);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al actualizar camilla' });
+  }
+};

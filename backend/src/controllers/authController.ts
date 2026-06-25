@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
-import { sendResetEmail } from '../utils/mailer';
+import { sendResetEmail, sendOtpEmail } from '../utils/mailer';
 
 const prisma = new PrismaClient();
 
@@ -60,10 +60,27 @@ export const login = async (req: Request, res: Response) => {
 export const me = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    if (!user) {
-      return res.status(401).json({ error: 'No autorizado' });
-    }
-    res.json(user);
+    if (!user) return res.status(401).json({ error: 'No autorizado' });
+
+    // Recargar datos frescos desde la BD, no usar el payload del JWT
+    const usuario = await prisma.usuario.findUnique({
+      where: { id_usuario: user.id_usuario },
+      include: {
+        persona: true,
+        rol: true,
+      }
+    });
+
+    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    res.json({
+      id_usuario:           usuario.id_usuario,
+      id_persona:           usuario.id_persona,
+      correo_institucional: usuario.correo_institucional,
+      estado_activo:        usuario.estado_activo,
+      rol:                  usuario.rol.nombre_rol,
+      persona:              usuario.persona,
+    });
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener usuario' });
   }
@@ -109,6 +126,111 @@ export const register = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('register error:', error);
     res.status(500).json({ error: 'Error al registrar usuario' });
+  }
+};
+
+const otpStore = new Map<string, { otp: string, data: any, expiresAt: number }>();
+
+export const requestPatientRegistration = async (req: Request, res: Response) => {
+  try {
+    const { nombre, apellido, dni, telefono, correo_institucional, contrasena, sexo } = req.body;
+
+    if (!nombre || !apellido || !dni || !correo_institucional || !contrasena || !sexo) {
+      return res.status(400).json({ error: 'Faltan campos requeridos.' });
+    }
+
+    const existingByEmail = await prisma.usuario.findUnique({ where: { correo_institucional } });
+    if (existingByEmail) return res.status(409).json({ error: 'Ya existe una cuenta con este correo.' });
+
+    // Generar OTP de 6 dígitos
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutos
+
+    otpStore.set(correo_institucional.toLowerCase(), {
+      otp,
+      data: { nombre, apellido, dni, telefono, correo_institucional, contrasena, sexo },
+      expiresAt
+    });
+
+    try {
+      await sendOtpEmail(correo_institucional, otp);
+    } catch (e) {
+      console.error('Error enviando OTP:', e);
+      return res.status(500).json({ error: 'No se pudo enviar el correo de verificación. Verifica el servidor SMTP.' });
+    }
+
+    res.status(200).json({ message: 'Código de verificación enviado al correo.' });
+  } catch (error) {
+    console.error('requestPatientRegistration error:', error);
+    res.status(500).json({ error: 'Error interno al solicitar registro.' });
+  }
+};
+
+export const verifyPatientRegistration = async (req: Request, res: Response) => {
+  try {
+    const { correo_institucional, otp } = req.body;
+    const emailKey = correo_institucional?.toLowerCase();
+
+    if (!emailKey || !otp) {
+      return res.status(400).json({ error: 'Correo y código son requeridos.' });
+    }
+
+    const record = otpStore.get(emailKey);
+    if (!record) {
+      return res.status(400).json({ error: 'No hay un registro pendiente o el código expiró.' });
+    }
+
+    if (Date.now() > record.expiresAt) {
+      otpStore.delete(emailKey);
+      return res.status(400).json({ error: 'El código ha expirado.' });
+    }
+
+    if (record.otp !== otp) {
+      return res.status(400).json({ error: 'El código es incorrecto.' });
+    }
+
+    // Código válido, procedemos a crear la cuenta
+    const { nombre, apellido, dni, telefono, contrasena, sexo } = record.data;
+
+    const nuevaPersona = await prisma.persona.create({
+      data: { nombre, apellido, dni, telefono: telefono || '000000000', direccion: 'No indicada', sexo, fecha_nacimiento: new Date() }
+    });
+
+    await prisma.paciente.create({
+      data: { id_persona: nuevaPersona.id_persona, grupo_sanguineo: 'N/A', alergias: 'Ninguna', peso: 0, altura: 0, contacto_emergencia: 'N/A', antecedentes_medicos: 'Ninguno', estado_paciente: 'Estable' }
+    });
+
+    const rolPaciente = await prisma.rol.findFirst({ where: { nombre_rol: 'Paciente' } });
+    const id_rol = rolPaciente ? rolPaciente.id_rol : 2;
+
+    const hash = await bcrypt.hash(contrasena, 10);
+    const nuevoUsuario = await prisma.usuario.create({
+      data: {
+        id_persona: nuevaPersona.id_persona,
+        id_rol,
+        correo_institucional: emailKey,
+        contrasena_hash: hash,
+        estado_activo: true,
+      },
+      include: { persona: true, rol: true },
+    });
+
+    otpStore.delete(emailKey); // Limpiar OTP usado
+
+    const { contrasena_hash, ...rest } = (nuevoUsuario as any);
+    res.status(201).json(rest);
+  } catch (error: any) {
+    console.error('verifyPatientRegistration error:', error);
+    
+    // Handle Prisma unique constraint errors specifically
+    if (error.code === 'P2002') {
+      const target = error.meta?.target as string[];
+      if (target?.includes('dni')) {
+        return res.status(400).json({ error: 'El DNI ingresado ya está registrado en el sistema. Si ya es paciente, contacte a administración para crear su usuario.' });
+      }
+    }
+    
+    res.status(500).json({ error: error.message || 'Error interno al verificar registro.' });
   }
 };
 

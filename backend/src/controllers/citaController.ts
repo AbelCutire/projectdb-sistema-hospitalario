@@ -20,8 +20,34 @@ export const getCitas = async (req: Request, res: Response) => {
 
 export const createCita = async (req: Request, res: Response) => {
   try {
+    const { id_paciente, id_doctor, id_consultorio, fecha, hora, estado } = req.body;
+
+    // Auto-crear paciente si no existe para evitar error de foreign key
+    const pacienteExistente = await prisma.paciente.findUnique({ where: { id_persona: Number(id_paciente) } });
+    if (!pacienteExistente) {
+      await prisma.paciente.create({
+        data: {
+          id_persona: Number(id_paciente),
+          grupo_sanguineo: 'Por definir',
+          alergias: 'Ninguna',
+          peso: 0,
+          altura: 0,
+          contacto_emergencia: 'Por definir',
+          antecedentes_medicos: 'Ninguno',
+          estado_paciente: 'Estable'
+        }
+      });
+    }
+
     const nuevaCita = await prisma.cita.create({
-      data: req.body,
+      data: {
+        id_paciente: Number(id_paciente),
+        id_doctor: Number(id_doctor),
+        id_consultorio: Number(id_consultorio),
+        fecha,
+        hora,
+        estado
+      },
     });
     res.status(201).json(nuevaCita);
   } catch (error) {

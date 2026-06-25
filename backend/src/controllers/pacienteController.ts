@@ -5,7 +5,11 @@ const prisma = new PrismaClient();
 
 export const getPacientes = async (req: Request, res: Response) => {
   try {
-    const pacientes = await prisma.paciente.findMany();
+    const pacientes = await prisma.paciente.findMany({
+      include: {
+        persona: true
+      }
+    });
     res.json(pacientes);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener pacientes' });
