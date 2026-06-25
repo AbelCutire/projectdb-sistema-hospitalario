@@ -22,7 +22,8 @@ export const getDiagnosticos = async (req: Request, res: Response) => {
 // GET /diagnostico/cita/:id_cita
 export const getDiagnosticosByCita = async (req: Request, res: Response) => {
   try {
-    const id_cita = parseInt(req.params.id_cita, 10);
+    const rawIdCita = Array.isArray(req.params.id_cita) ? req.params.id_cita[0] : req.params.id_cita;
+    const id_cita = parseInt(rawIdCita as string, 10);
     const diagnosticos = await prisma.diagnostico.findMany({
       where: { id_cita },
       include: {
@@ -93,7 +94,8 @@ export const createDiagnostico = async (req: Request, res: Response) => {
 // GET /diagnostico/:id
 export const getDiagnosticoById = async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const id = parseInt(rawId as string, 10);
     const diagnostico = await prisma.diagnostico.findUnique({
       where: { id_diagnostico: id },
       include: {

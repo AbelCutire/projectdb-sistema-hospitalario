@@ -7,7 +7,8 @@ const prisma = new PrismaClient();
 // Devuelve el historial clínico completo con todos los diagnósticos, tratamientos y recetas
 export const getHistorialByPaciente = async (req: Request, res: Response) => {
   try {
-    const id_paciente = parseInt(req.params.id_paciente, 10);
+    const rawId = Array.isArray(req.params.id_paciente) ? req.params.id_paciente[0] : req.params.id_paciente;
+    const id_paciente = parseInt(rawId as string, 10);
 
     const historial = await prisma.historial_clinico.findUnique({
       where: { id_paciente },

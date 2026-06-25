@@ -52,12 +52,6 @@ export const sendResetEmail = async (to: string, token: string) => {
       </div>
     `,
   });
-  console.log('Mailer: sendMail info:', {
-    messageId: info.messageId,
-    accepted: info.accepted,
-    rejected: info.rejected,
-    response: info.response,
-  });
 
   return info;
 };
@@ -79,7 +73,6 @@ export const sendOtpEmail = async (to: string, otp: string) => {
       </div>
     `,
   });
-  console.log('Mailer: sendOtpEmail info:', { accepted: info.accepted });
   return info;
 };
 

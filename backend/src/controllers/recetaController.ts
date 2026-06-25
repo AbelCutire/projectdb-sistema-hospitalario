@@ -25,7 +25,8 @@ export const getRecetas = async (req: Request, res: Response) => {
 // GET /receta/tratamiento/:id_tratamiento
 export const getRecetasByTratamiento = async (req: Request, res: Response) => {
   try {
-    const id_tratamiento = parseInt(req.params.id_tratamiento, 10);
+    const rawId = Array.isArray(req.params.id_tratamiento) ? req.params.id_tratamiento[0] : req.params.id_tratamiento;
+    const id_tratamiento = parseInt(rawId as string, 10);
     const recetas = await prisma.receta.findMany({
       where: { id_tratamiento },
       include: { detalle_receta: { include: { farmacia: true } } }

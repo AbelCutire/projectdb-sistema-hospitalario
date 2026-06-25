@@ -23,7 +23,8 @@ export const getSolicitudes = async (req: Request, res: Response) => {
 // GET /solicitud/doctor/:id_usuario — Doctor: sus solicitudes enviadas
 export const getSolicitudesByDoctor = async (req: Request, res: Response) => {
   try {
-    const id_doctor = parseInt(req.params.id_usuario, 10);
+    const rawId = Array.isArray(req.params.id_usuario) ? req.params.id_usuario[0] : req.params.id_usuario;
+    const id_doctor = parseInt(rawId as string, 10);
     const solicitudes = await prisma.solicitud_acceso.findMany({
       where: { id_doctor },
       include: {
@@ -76,7 +77,8 @@ export const createSolicitud = async (req: Request, res: Response) => {
 // PUT /solicitud/:id — Admin: aprobar o rechazar
 // Body: { estado: 'Aprobada' | 'Rechazada', id_admin }
 export const responderSolicitud = async (req: Request, res: Response) => {
-  const id_solicitud = parseInt(req.params.id, 10);
+  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id_solicitud = parseInt(rawId as string, 10);
   const { estado, id_admin } = req.body;
 
   if (!['Aprobada', 'Rechazada'].includes(estado)) {

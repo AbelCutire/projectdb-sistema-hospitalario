@@ -16,7 +16,8 @@ export const getCamillas = async (req: Request, res: Response) => {
 
 export const updateCamilla = async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const id = parseInt(rawId as string, 10);
     const { estado } = req.body;
     
     if (isNaN(id)) {

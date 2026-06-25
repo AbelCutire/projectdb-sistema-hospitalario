@@ -6,7 +6,8 @@ const prisma = new PrismaClient();
 // GET /tratamiento/diagnostico/:id_diagnostico
 export const getTratamientosByDiagnostico = async (req: Request, res: Response) => {
   try {
-    const id_diagnostico = parseInt(req.params.id_diagnostico, 10);
+    const rawId = Array.isArray(req.params.id_diagnostico) ? req.params.id_diagnostico[0] : req.params.id_diagnostico;
+    const id_diagnostico = parseInt(rawId as string, 10);
     const tratamientos = await prisma.tratamiento.findMany({
       where: { id_diagnostico },
       include: {
@@ -53,7 +54,8 @@ export const createTratamiento = async (req: Request, res: Response) => {
 // GET /tratamiento/:id
 export const getTratamientoById = async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const id = parseInt(rawId as string, 10);
     const tratamiento = await prisma.tratamiento.findUnique({
       where: { id_tratamiento: id },
       include: {
