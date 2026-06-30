@@ -49,14 +49,14 @@ export const createReceta = async (req: Request, res: Response) => {
   try {
     const receta = await prisma.receta.create({
       data: {
-        fecha_emision:  new Date(fecha_emision),
+        fecha_emision: new Date(fecha_emision),
         id_tratamiento: Number(id_tratamiento),
         detalle_receta: {
           create: detalles.map((d: any) => ({
             id_farmacia: Number(d.id_farmacia),
-            dosis:       String(d.dosis),
-            frecuencia:  String(d.frecuencia),
-            duracion:    String(d.duracion)
+            dosis: String(d.dosis),
+            frecuencia: String(d.frecuencia),
+            duracion: String(d.duracion)
           }))
         }
       },

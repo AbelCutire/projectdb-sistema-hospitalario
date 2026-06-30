@@ -1,24 +1,79 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../services/api';
 import DashboardView from '../views/DashboardView';
 import PersonasView from '../views/PersonasView';
 import CitasView from '../views/CitasView';
 import ProfileView from '../views/ProfileView';
 import ClinicoView from '../views/ClinicoView';
+import FarmaciaView from '../views/FarmaciaView';
+
+// Map URL segment -> view id
+const VIEW_MAP = {
+  'inicio':    'dashboard-view',
+  'personas':  'personas-view',
+  'citas':     'citas-view',
+  'historial': 'clinico-view',
+  'farmacia':  'farmacia-view',
+  'perfil':    'profile-view',
+};
+const VIEW_REVERSE = Object.fromEntries(Object.entries(VIEW_MAP).map(([k, v]) => [v, k]));
 
 const NAV_ICONS = {
-  'dashboard-view': '',
-  'personas-view':  '',
-  'citas-view':     '',
-  'profile-view':   '',
-  'clinico-view':   ''
+  'dashboard-view': (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+  ),
+  'personas-view': (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+  ),
+  'citas-view': (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="4" width="18" height="18" rx="2"/>
+      <line x1="16" y1="2" x2="16" y2="6"/>
+      <line x1="8" y1="2" x2="8" y2="6"/>
+      <line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+  ),
+  'clinico-view': (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+    </svg>
+  ),
+  'farmacia-view': (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/>
+      <line x1="12" y1="8" x2="12" y2="16"/>
+      <line x1="8" y1="12" x2="16" y2="12"/>
+    </svg>
+  ),
+  'profile-view': (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </svg>
+  ),
 };
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { view: viewParam } = useParams();
+
+  const activeView = VIEW_MAP[viewParam] || 'dashboard-view';
+
+  const setActiveView = (viewId) => {
+    const segment = VIEW_REVERSE[viewId] || 'inicio';
+    navigate(`/dashboard/${segment}`);
+  };
+
   const [userRole, setUserRole]       = useState(localStorage.getItem('userRole') || 'Usuario');
-  const [activeView, setActiveView]   = useState('dashboard-view');
   const [userName, setUserName]       = useState(localStorage.getItem('userName') || 'Usuario');
   const [userProfile, setUserProfile] = useState(null);
   const [searchTerm, setSearchTerm]   = useState('');
@@ -32,13 +87,11 @@ export default function DashboardPage() {
 
     api('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
       .then(async (data) => {
-        // data ya contiene id_usuario, id_persona, rol, persona (gracias al fix del backend)
         const role = data?.rol || localStorage.getItem('userRole') || 'Usuario';
 
         if (role === 'Médico Especialista' && data?.id_persona) {
           try {
             const doctorData = await api(`/doctor/${data.id_persona}`, { headers: { Authorization: `Bearer ${token}` } });
-            // Mantener el id_usuario del token, y agregar datos del doctor
             data.doctor  = doctorData;
             data.persona = doctorData?.empleado?.persona || data.persona;
           } catch (err) {
@@ -112,12 +165,12 @@ export default function DashboardPage() {
       { id: 'personas-view',  label: 'Personas',          roles: ['Administrador'] },
       { id: 'citas-view',     label: 'Citas Médicas',     roles: ['Administrador', 'Médico Especialista', 'Paciente'] },
       { id: 'clinico-view',   label: 'Historial Clínico', roles: ['Administrador', 'Médico Especialista', 'Paciente'] },
+      { id: 'farmacia-view',  label: 'Farmacia',          roles: ['Administrador'] },
       { id: 'profile-view',   label: 'Perfil',            roles: ['Administrador', 'Médico Especialista', 'Enfermería', 'Paciente'] },
     ];
     return all.filter(item => item.roles.includes(userRole));
   }, [userRole]);
 
-  // Initials from username
   const initials = userName
     .split(' ')
     .slice(0, 2)
@@ -151,6 +204,20 @@ export default function DashboardPage() {
             ))}
           </div>
         </nav>
+
+        <div className="sidebar-footer">
+          <div className="sidebar-help">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#e2e8f0' }}>¿Necesitas ayuda?</div>
+              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)' }}>Contáctanos con soporte</div>
+            </div>
+          </div>
+        </div>
       </aside>
 
       {/* ── Main Content ─────────────────────────────── */}
@@ -158,7 +225,8 @@ export default function DashboardPage() {
         {/* Topbar */}
         <header className="topbar">
           <div className="topbar-left">
-            {userRole === 'Administrador' && (
+            {/* Search bar only shows in Personas view for admin */}
+            {userRole === 'Administrador' && activeView === 'personas-view' && (
               <>
                 <div className="topbar-search">
                   <input
@@ -213,6 +281,10 @@ export default function DashboardPage() {
 
           {activeView === 'clinico-view' && (
             <ClinicoView userRole={userRole} userProfile={userProfile} />
+          )}
+
+          {activeView === 'farmacia-view' && (
+            <FarmaciaView />
           )}
 
           {activeView === 'profile-view' && (

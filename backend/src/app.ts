@@ -17,6 +17,7 @@ import historialRoutes     from './routes/historialRoutes';
 import consultorioRoutes   from './routes/consultorioRoutes';
 import solicitudRoutes     from './routes/solicitudRoutes';
 import { runSeeder }       from './utils/seeder';
+import medicamentoRoutes   from './routes/medicamentoRoutes';
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ app.use('/historial',    historialRoutes);
 app.use('/consultorio',  consultorioRoutes);
 app.use('/solicitud',    solicitudRoutes);
 app.use('/farmacia',     farmaciaRoutes);
+app.use('/medicamento',  medicamentoRoutes);
 app.use('/departamento', departamentoRoutes);
 app.use('/persona',      personaRoutes);
 app.use('/camilla',      camillaRoutes);
