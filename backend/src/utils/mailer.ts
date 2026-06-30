@@ -17,6 +17,9 @@ const transporter = nodemailer.createTransport({
   requireTLS: !USE_SECURE,
   auth: SMTP_USER && SMTP_PASS ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
   tls: { rejectUnauthorized: false },
+  connectionTimeout: 4000, // Falla rápido (4s) si Railway bloquea el puerto
+  greetingTimeout: 4000,
+  socketTimeout: 4000,
 });
 // Verificar conexión al transporte y loguear el estado
 transporter.verify().then(() => {

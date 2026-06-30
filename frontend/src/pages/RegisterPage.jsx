@@ -16,7 +16,7 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
     try {
-      await api('/auth/register-request', {
+      const data = await api('/auth/register-request', {
         method: 'POST',
         body: JSON.stringify({
           nombre: regForm.nombre,
@@ -28,6 +28,11 @@ export default function RegisterPage() {
           sexo: regForm.sexo
         })
       });
+      
+      if (data.otpFallback) {
+        alert(`IMPORTANTE - MODO DEMO:\n\nComo el servidor de correos está bloqueado en Railway, tu código de verificación es: ${data.otpFallback}\n\nÚsalo en la siguiente pantalla.`);
+      }
+      
       // Redirect to verify page with email in query string
       navigate(`/verify-email?email=${encodeURIComponent(regForm.email)}`);
     } catch (err) {

@@ -155,8 +155,11 @@ export const requestPatientRegistration = async (req: Request, res: Response) =>
     try {
       await sendOtpEmail(correo_institucional, otp);
     } catch (e) {
-      console.error('Error enviando OTP:', e);
-      return res.status(500).json({ error: 'No se pudo enviar el correo de verificación. Verifica el servidor SMTP.' });
+      console.error('Error enviando OTP (bloqueo Railway):', e);
+      return res.status(200).json({ 
+        message: 'Modo Demo (SMTP Bloqueado): Se ha generado tu código de acceso temporal.', 
+        otpFallback: otp 
+      });
     }
 
     res.status(200).json({ message: 'Código de verificación enviado al correo.' });
@@ -255,8 +258,11 @@ export const forgotPassword = async (req: Request, res: Response) => {
     try {
       await sendResetEmail(correo_institucional, resetToken);
     } catch (e) {
-      console.error('sendResetEmail error:', e);
-      return res.status(500).json({ error: 'No se pudo enviar el correo de restablecimiento. Verifique la configuración SMTP.' });
+      console.error('sendResetEmail error (bloqueo Railway):', e);
+      return res.status(200).json({ 
+        message: 'Modo Demo (SMTP Bloqueado): Usa este enlace para restablecer tu contraseña.',
+        resetLinkFallback: `/auth/reset?token=${resetToken}`
+      });
     }
 
     res.json({ message: 'Si el correo existe, se han enviado instrucciones para restablecer la contraseña.' });

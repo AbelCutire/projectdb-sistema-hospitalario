@@ -47,11 +47,17 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await api('/auth/forgot', {
+      const data = await api('/auth/forgot', {
         method: 'POST',
         body: JSON.stringify({ correo_institucional: form.email })
       });
-      alert('Si el correo existe, recibirá instrucciones para restablecer su contraseña.');
+      
+      if (data.resetLinkFallback) {
+        alert(`IMPORTANTE - MODO DEMO:\n\nComo el servidor de correos está bloqueado en Railway, entra al siguiente enlace para cambiar tu contraseña:\n\nhttps://projectdb-sistema-hospitalario-production.up.railway.app${data.resetLinkFallback}`);
+      } else {
+        alert('Si el correo existe, recibirá instrucciones para restablecer su contraseña.');
+      }
+      
       setViewMode('login');
     } catch (err) {
       setError(err.message || 'No se pudo enviar el correo de recuperación.');
