@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+import prisma from '../config/database';
 
 // GET /receta
 export const getRecetas = async (req: Request, res: Response) => {

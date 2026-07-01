@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+import prisma from '../config/database';
 
 // GET /persona — incluye usuario+rol para que el admin vea el tipo de cada persona
 export const getPersonas = async (req: Request, res: Response) => {
@@ -155,6 +154,11 @@ export const updateRolPersona = async (req: Request, res: Response) => {
         await prisma.enfermera.create({ data: { id_persona, id_turno: 1 } });
       }
     }
+
+    // Registrar en auditoría
+    const userId = (req as any).user?.id_usuario || null;
+    const { logAction } = await import('../utils/auditService');
+    await logAction(userId, 'ACTUALIZAR_ROL', 'usuario', `Se cambió el rol de persona ID: ${id_persona} a rol ID: ${id_rol}`);
 
     res.json(actualizado);
   } catch (error) {

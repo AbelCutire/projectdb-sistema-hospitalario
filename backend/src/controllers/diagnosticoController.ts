@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+import prisma from '../config/database';
 
 // GET /diagnostico
 export const getDiagnosticos = async (req: Request, res: Response) => {
@@ -83,6 +82,11 @@ export const createDiagnostico = async (req: Request, res: Response) => {
       where: { id_cita: Number(id_cita) },
       data: { estado: 'Completada' }
     });
+
+    // Registrar en auditoría
+    const userId = (req as any).user?.id_usuario || null;
+    const { logAction } = await import('../utils/auditService');
+    await logAction(userId, 'CREAR_DIAGNOSTICO', 'diagnostico', `Se creó el diagnóstico ID: ${nuevoDiagnostico.id_diagnostico}`);
 
     res.status(201).json(nuevoDiagnostico);
   } catch (error) {

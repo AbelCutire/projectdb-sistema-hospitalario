@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'https://projectdb-sistema-hospitalario-production.up.railway.app';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export async function api(path, options = {}) {
   const { headers, ...restOptions } = options;

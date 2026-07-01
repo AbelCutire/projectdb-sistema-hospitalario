@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+import prisma from '../config/database';
 
 // GET /historial/:id_paciente
 // Devuelve el historial clínico completo con todos los diagnósticos, tratamientos y recetas

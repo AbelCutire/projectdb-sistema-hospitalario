@@ -44,6 +44,11 @@ export default function CitasView({ userRole, userProfile }) {
   const [showForm, setShowForm]         = useState(false);
   const [citaAtendida, setCitaAtendida] = useState(null);
   const [loading, setLoading]           = useState(true);
+  
+  // Custom modals state
+  const [citaToCancel, setCitaToCancel] = useState(null);
+  const [isCanceling, setIsCanceling]   = useState(false);
+  const [alertMsg, setAlertMsg]         = useState({ show: false, message: '', type: 'success' });
 
   const [nuevaCita, setNuevaCita] = useState({
     id_paciente: '', id_doctor: '', id_consultorio: '', fecha: '', hora: ''
@@ -159,12 +164,36 @@ export default function CitasView({ userRole, userProfile }) {
           id_consultorio: id_cons
         })
       });
-      setShowForm(false);
       setNuevaCita({ id_paciente: '', id_doctor: '', id_consultorio: '', fecha: '', hora: '' });
       fetchData();
     } catch (err) {
       console.error('Error al agendar:', err);
-      alert(err.message || 'Error al agendar la cita. Revise los datos e intente nuevamente.');
+      setAlertMsg({ show: true, message: err.message || 'Error al agendar la cita. Revise los datos e intente nuevamente.', type: 'error' });
+    }
+  };
+
+  const handleCancelarCita = (cita) => {
+    // Abrir el modal personalizado
+    setCitaToCancel(cita);
+  };
+
+  const confirmCancelarCita = async () => {
+    if (!citaToCancel) return;
+    setIsCanceling(true);
+
+    try {
+      await api(`/cita/${citaToCancel.id_cita}/cancelar`, {
+        method: 'PUT',
+        headers
+      });
+      setAlertMsg({ show: true, message: 'Cita cancelada con éxito.', type: 'success' });
+      fetchData();
+    } catch (err) {
+      console.error('Error al cancelar:', err);
+      setAlertMsg({ show: true, message: err.message || 'Error al cancelar la cita. Es posible que haya expirado el límite de 24 horas.', type: 'error' });
+    } finally {
+      setIsCanceling(false);
+      setCitaToCancel(null);
     }
   };
 
@@ -325,7 +354,7 @@ export default function CitasView({ userRole, userProfile }) {
                   <th>Especialidad</th>
                   <th>Consultorio</th>
                   <th>Estado</th>
-                  {userRole === 'Médico Especialista'  && <th>Acción</th>}
+                  <th>Acción</th>
                 </tr>
               </thead>
               <tbody>
@@ -359,9 +388,9 @@ export default function CitasView({ userRole, userProfile }) {
                       </td>
                       <td style={{ fontSize: '0.85rem' }}>{consultorioLabel}</td>
                       <td>{statusBadge(cita.estado)}</td>
-                      {userRole === 'Médico Especialista' && (
-                        <td>
-                          {pendiente ? (
+                      <td>
+                        {userRole === 'Médico Especialista' ? (
+                          pendiente ? (
                             <button
                               className="btn-primary"
                               style={{ padding: '6px 14px', fontSize: '0.8rem', borderRadius: 8 }}
@@ -371,9 +400,21 @@ export default function CitasView({ userRole, userProfile }) {
                             </button>
                           ) : (
                             <span style={{ fontSize: '0.78rem', color: 'var(--slate-400)' }}>—</span>
-                          )}
-                        </td>
-                      )}
+                          )
+                        ) : (
+                          pendiente ? (
+                            <button
+                              className="btn-secondary"
+                              style={{ padding: '6px 14px', fontSize: '0.8rem', borderRadius: 8, color: 'var(--red-600)', borderColor: 'var(--red-200)', background: 'var(--red-50)' }}
+                              onClick={() => handleCancelarCita(cita)}
+                            >
+                              Cancelar
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: '0.78rem', color: 'var(--slate-400)' }}>—</span>
+                          )
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
@@ -392,6 +433,59 @@ export default function CitasView({ userRole, userProfile }) {
           onClose={() => setCitaAtendida(null)}
           onSaved={() => { setCitaAtendida(null); fetchData(); }}
         />
+      )}
+
+      {/* Modal Cancelación */}
+      {citaToCancel && (
+        <>
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(4px)', zIndex: 1000 }} onClick={() => !isCanceling && setCitaToCancel(null)} />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            background: '#fff', padding: '32px', borderRadius: '16px', zIndex: 1001,
+            width: '90%', maxWidth: '420px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }}>
+            <h3 style={{ marginTop: 0, marginBottom: '16px', color: 'var(--slate-800)', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '50%', background: 'var(--red-100)', color: 'var(--red-600)', fontSize: '1.2rem' }}>⚠️</span>
+              Cancelar Cita
+            </h3>
+            <p style={{ color: 'var(--slate-600)', marginBottom: '24px', lineHeight: '1.5' }}>
+              ¿Estás seguro de que deseas cancelar la cita del <strong>{fechaStr(citaToCancel.fecha)}</strong> a las <strong>{horaStr(citaToCancel.hora)}</strong>?<br/><br/>
+              <span style={{ fontSize: '0.85rem', color: 'var(--red-500)' }}>Recuerda: Solo se puede cancelar si faltan 24 horas o más para la consulta.</span>
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button 
+                onClick={() => setCitaToCancel(null)} 
+                disabled={isCanceling}
+                style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--slate-300)', background: '#fff', color: 'var(--slate-700)', cursor: isCanceling ? 'not-allowed' : 'pointer', fontWeight: 600, flex: 1 }}
+              >
+                Volver
+              </button>
+              <button 
+                onClick={confirmCancelarCita} 
+                disabled={isCanceling}
+                style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: 'var(--red-600)', color: '#fff', cursor: isCanceling ? 'not-allowed' : 'pointer', fontWeight: 600, flex: 1 }}
+              >
+                {isCanceling ? 'Cancelando...' : 'Sí, cancelar'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Alerta tipo Toast */}
+      {alertMsg.show && (
+        <div style={{
+          position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999,
+          background: alertMsg.type === 'error' ? 'var(--red-600)' : 'var(--emerald-600)',
+          color: '#fff', padding: '16px 24px', borderRadius: '12px',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '400px',
+          animation: 'slideUp 0.3s ease-out'
+        }}>
+          <span style={{ fontSize: '1.2rem' }}>{alertMsg.type === 'error' ? '❌' : '✅'}</span>
+          <div style={{ flex: 1, fontSize: '0.95rem', fontWeight: 500, lineHeight: 1.4 }}>{alertMsg.message}</div>
+          <button onClick={() => setAlertMsg({ show: false, message: '', type: 'success' })} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: '4px', opacity: 0.8 }}>✕</button>
+        </div>
       )}
     </div>
   );

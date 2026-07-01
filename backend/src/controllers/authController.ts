@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { sendResetEmail, sendOtpEmail } from '../utils/mailer';
 
-const prisma = new PrismaClient();
+import prisma from '../config/database';
 
 const JWT_SECRET: jwt.Secret = process.env.JWT_SECRET || 'change_this_secret';
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || '1h') as jwt.SignOptions['expiresIn'];
