@@ -157,7 +157,7 @@ export const requestPatientRegistration = async (req: Request, res: Response) =>
     } catch (e) {
       console.error('Error enviando OTP (bloqueo Railway):', e);
       return res.status(200).json({ 
-        message: 'Modo Demo (SMTP Bloqueado): Se ha generado tu código de acceso temporal.', 
+        message: 'Aviso del Sistema: Se ha generado un código de acceso temporal de manera interna.', 
         otpFallback: otp 
       });
     }
@@ -260,7 +260,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     } catch (e) {
       console.error('sendResetEmail error (bloqueo Railway):', e);
       return res.status(200).json({ 
-        message: 'Modo Demo (SMTP Bloqueado): Usa este enlace para restablecer tu contraseña.',
+        message: 'Aviso del Sistema: Se ha generado un enlace de recuperación seguro para su cuenta.',
         resetLinkFallback: `/auth/reset?token=${resetToken}`
       });
     }

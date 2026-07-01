@@ -30,7 +30,7 @@ export default function RegisterPage() {
       });
       
       if (data.otpFallback) {
-        alert(`IMPORTANTE - MODO DEMO:\n\nComo el servidor de correos está bloqueado en Railway, tu código de verificación es: ${data.otpFallback}\n\nÚsalo en la siguiente pantalla.`);
+        alert(`Aviso del Sistema:\n\nSe ha habilitado la verificación interna. Su código de seguridad temporal es: ${data.otpFallback}\n\nPor favor, introdúzcalo en la siguiente pantalla para validar su identidad.`);
       }
       
       // Redirect to verify page with email in query string

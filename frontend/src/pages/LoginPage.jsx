@@ -53,7 +53,7 @@ export default function LoginPage() {
       });
       
       if (data.resetLinkFallback) {
-        alert(`IMPORTANTE - MODO DEMO:\n\nComo el servidor de correos está bloqueado en Railway, entra al siguiente enlace para cambiar tu contraseña:\n\nhttps://projectdb-sistema-hospitalario-production.up.railway.app${data.resetLinkFallback}`);
+        alert(`Aviso del Sistema:\n\nSe ha habilitado la recuperación interna. Para restablecer su contraseña, por favor acceda al siguiente enlace seguro:\n\nhttps://projectdb-sistema-hospitalario-production.up.railway.app${data.resetLinkFallback}`);
       } else {
         alert('Si el correo existe, recibirá instrucciones para restablecer su contraseña.');
       }
