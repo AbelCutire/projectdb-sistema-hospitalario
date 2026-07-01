@@ -8,6 +8,7 @@ import ProfileView from '../views/ProfileView';
 import ClinicoView from '../views/ClinicoView';
 import FarmaciaView from '../views/FarmaciaView';
 import AuditoriaView from '../views/AuditoriaView';
+import HospitalizacionView from '../views/HospitalizacionView';
 
 // Map URL segment -> view id
 const VIEW_MAP = {
@@ -17,6 +18,7 @@ const VIEW_MAP = {
   'historial': 'clinico-view',
   'farmacia':  'farmacia-view',
   'auditoria': 'auditoria-view',
+  'hospitalizacion': 'hospitalizacion-view',
   'perfil':    'profile-view',
 };
 const VIEW_REVERSE = Object.fromEntries(Object.entries(VIEW_MAP).map(([k, v]) => [v, k]));
@@ -66,6 +68,11 @@ const NAV_ICONS = {
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
       <path d="m9 12 2 2 4-4"/>
+    </svg>
+  ),
+  'hospitalizacion-view': (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/>
     </svg>
   ),
 };
@@ -173,6 +180,7 @@ export default function DashboardPage() {
       { id: 'personas-view',  label: 'Personas',          roles: ['Administrador'] },
       { id: 'citas-view',     label: 'Citas Médicas',     roles: ['Administrador', 'Médico Especialista', 'Paciente'] },
       { id: 'clinico-view',   label: 'Historial Clínico', roles: ['Administrador', 'Médico Especialista', 'Paciente'] },
+      { id: 'hospitalizacion-view', label: 'Hospitalización', roles: ['Administrador', 'Enfermería'] },
       { id: 'farmacia-view',  label: 'Farmacia',          roles: ['Administrador'] },
       { id: 'auditoria-view', label: 'Auditoría',         roles: ['Administrador'] },
       { id: 'profile-view',   label: 'Perfil',            roles: ['Administrador', 'Médico Especialista', 'Enfermería', 'Paciente'] },
@@ -287,6 +295,10 @@ export default function DashboardPage() {
 
           {activeView === 'auditoria-view' && (
             <AuditoriaView />
+          )}
+
+          {activeView === 'hospitalizacion-view' && (
+            <HospitalizacionView userRole={userRole} />
           )}
 
           {activeView === 'profile-view' && (

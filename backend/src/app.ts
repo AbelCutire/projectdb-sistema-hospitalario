@@ -20,6 +20,8 @@ import consultorioRoutes   from './routes/consultorioRoutes';
 import solicitudRoutes     from './routes/solicitudRoutes';
 import medicamentoRoutes   from './routes/medicamentoRoutes';
 import auditoriaRoutes     from './routes/auditoriaRoutes';
+import empleadoRoutes      from './routes/empleadoRoutes';
+import hospitalizacionRoutes from './routes/hospitalizacionRoutes';
 import { runSeeder }       from './utils/seeder';
 import { authMiddleware }  from './middlewares/authMiddleware';
 import { roleMiddleware }  from './middlewares/roleMiddleware';
@@ -49,6 +51,8 @@ app.use('/departamento', authMiddleware, departamentoRoutes);
 app.use('/camilla',      authMiddleware, camillaRoutes);
 app.use('/auditoria',    authMiddleware, roleMiddleware('Administrador'), auditoriaRoutes);
 app.use('/persona',      authMiddleware, personaRoutes);
+app.use('/empleado',     authMiddleware, empleadoRoutes);
+app.use('/hospitalizacion', authMiddleware, hospitalizacionRoutes);
 
 app.get('/health', async (req: express.Request, res: express.Response) => {
   try {

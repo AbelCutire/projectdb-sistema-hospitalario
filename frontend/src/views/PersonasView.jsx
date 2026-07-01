@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { api } from '../services/api';
 import DetallesPersonaModal from '../components/DetallesPersonaModal';
 import ConfirmModal from '../components/ConfirmModal';
+import ContratoModal from '../components/ContratoModal';
 
 const ROLE_COLORS = {
   'Administrador':       'badge-red',
@@ -30,6 +31,7 @@ export default function PersonasView({ loadingPersonas, filteredPersonas, resume
   const [deletePersona, setDeletePersona] = useState(null);
   const [deleteStage, setDeleteStage] = useState(0); // 0: cerrado, 1: advertencia, 2: advertencia crítica
   const [isDeleting, setIsDeleting] = useState(false);
+  const [contratoModalPersona, setContratoModalPersona] = useState(null);
 
   const token = localStorage.getItem('token');
 
@@ -245,6 +247,16 @@ export default function PersonasView({ loadingPersonas, filteredPersonas, resume
                           >
                             Rol
                           </button>
+                          {userRole === 'Administrador' && p.empleado && (
+                            <button
+                              className="btn-secondary"
+                              style={{ padding: '5px 10px', fontSize: '0.75rem', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 4 }}
+                              onClick={() => setContratoModalPersona(p)}
+                              title="Gestionar Nómina y Contrato"
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </button>
+                          )}
                           <button
                             className="btn-secondary"
                             style={{ padding: '5px 10px', fontSize: '0.75rem', borderRadius: 6, color: 'var(--red-600)', borderColor: 'rgba(220,38,38,0.2)', background: 'rgba(220,38,38,0.05)' }}
@@ -349,6 +361,18 @@ export default function PersonasView({ loadingPersonas, filteredPersonas, resume
           onClose={() => setDetallesModalId(null)} 
           userRole={userRole}
           userProfile={userProfile}
+        />
+      )}
+
+      {/* Modal Contrato Laboral */}
+      {contratoModalPersona && (
+        <ContratoModal
+          persona={contratoModalPersona}
+          onClose={() => setContratoModalPersona(null)}
+          onSaved={() => {
+            setContratoModalPersona(null);
+            window.location.reload();
+          }}
         />
       )}
 
