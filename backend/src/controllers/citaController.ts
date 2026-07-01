@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 
 import prisma from '../config/database';
-
+import { logAction } from '../utils/auditService';
 export const getCitas = async (req: Request, res: Response) => {
   try {
     const citas = await prisma.cita.findMany({
@@ -144,7 +144,6 @@ export const cancelarCita = async (req: Request, res: Response) => {
     });
 
     // Registrar en auditoría
-    const { logAction } = await import('../utils/auditService');
     await logAction(userId, 'CANCELAR_CITA', 'cita', `Se canceló la cita ID: ${id}`);
 
     res.json(citaCancelada);
