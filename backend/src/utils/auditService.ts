@@ -12,18 +12,11 @@ export const logAction = async (
 
     await prisma.auditoria.create({
       data: {
-<<<<<<< HEAD
-        id_usuario: id_usuario,
-        accion_realizada: accion,
-        tabla_afectada: tabla_afectada || 'General',
-        descripcion_cambio: detalles
-=======
         id_usuario,
         accion_realizada,
         tabla_afectada,
         descripcion_cambio,
         fecha_hora: new Date()
->>>>>>> eb19a4ba20c73359629be2c04abebb6dfcee5cf3
       }
     });
   } catch (error) {

@@ -157,10 +157,7 @@ export const updateRolPersona = async (req: Request, res: Response) => {
 
     // Registrar en auditoría
     const userId = (req as any).user?.id_usuario || null;
-<<<<<<< HEAD
     const { logAction } = await import('../utils/auditService.js');
-=======
->>>>>>> eb19a4ba20c73359629be2c04abebb6dfcee5cf3
     await logAction(userId, 'ACTUALIZAR_ROL', 'usuario', `Se cambió el rol de persona ID: ${id_persona} a rol ID: ${id_rol}`);
 
     res.json(actualizado);
