@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import DetallesPersonaModal from '../components/DetallesPersonaModal';
 import ConfirmModal from '../components/ConfirmModal';
 import ContratoModal from '../components/ContratoModal';
+import CrearCuentaModal from '../components/CrearCuentaModal';
 
 const ROLE_COLORS = {
   'Administrador':       'badge-red',
@@ -32,6 +33,7 @@ export default function PersonasView({ loadingPersonas, filteredPersonas, resume
   const [deleteStage, setDeleteStage] = useState(0); // 0: cerrado, 1: advertencia, 2: advertencia crítica
   const [isDeleting, setIsDeleting] = useState(false);
   const [contratoModalPersona, setContratoModalPersona] = useState(null);
+  const [cuentaModalPersona, setCuentaModalPersona] = useState(null);
 
   const token = localStorage.getItem('token');
 
@@ -250,11 +252,21 @@ export default function PersonasView({ loadingPersonas, filteredPersonas, resume
                           {userRole === 'Administrador' && p.empleado && (
                             <button
                               className="btn-secondary"
-                              style={{ padding: '5px 10px', fontSize: '0.75rem', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 4 }}
+                              style={{ padding: '5px 10px', fontSize: '0.75rem', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 4, title: "Gestionar Nómina y Contrato" }}
                               onClick={() => setContratoModalPersona(p)}
                               title="Gestionar Nómina y Contrato"
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </button>
+                          )}
+                          {userRole === 'Administrador' && !p.usuario && p.empleado && (
+                            <button
+                              className="btn-secondary"
+                              style={{ padding: '5px 10px', fontSize: '0.75rem', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 4, color: 'var(--blue-600)', background: 'var(--blue-50)', borderColor: 'var(--blue-200)' }}
+                              onClick={() => setCuentaModalPersona(p)}
+                              title="Crear Cuenta de Usuario"
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
                             </button>
                           )}
                           <button
@@ -398,6 +410,20 @@ export default function PersonasView({ loadingPersonas, filteredPersonas, resume
         onConfirm={executeDelete}
         onCancel={() => { if (!isDeleting) { setDeleteStage(0); setDeletePersona(null); } }}
       />
+
+      {/* Modal crear cuenta */}
+      {cuentaModalPersona && (
+        <CrearCuentaModal 
+          persona={cuentaModalPersona}
+          onClose={() => setCuentaModalPersona(null)}
+          onSaved={() => {
+            setCuentaModalPersona(null);
+            toast.success('Cuenta de usuario creada con éxito');
+            // Idealmente deberíamos recargar la lista de personas para que se refleje que ya tiene rol
+            setTimeout(() => window.location.reload(), 1500);
+          }}
+        />
+      )}
     </div>
   );
 }

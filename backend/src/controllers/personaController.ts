@@ -327,3 +327,12 @@ export const deletePersona = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Error al eliminar la persona en cascada' });
   }
 };
+
+export const getEspecialidades = async (req: Request, res: Response) => {
+  try {
+    const especialidades = await prisma.especialidad.findMany();
+    res.json(especialidades);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener especialidades' });
+  }
+};

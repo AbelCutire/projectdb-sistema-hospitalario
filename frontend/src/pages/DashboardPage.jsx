@@ -290,7 +290,7 @@ export default function DashboardPage() {
           )}
 
           {activeView === 'farmacia-view' && (
-            <FarmaciaView />
+            <FarmaciaView userRole={userRole} />
           )}
 
           {activeView === 'auditoria-view' && (

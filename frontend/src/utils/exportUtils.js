@@ -2,7 +2,7 @@ export function exportToCsv(filename, rows) {
   if (!rows || !rows.length) {
     return;
   }
-  const separator = ',';
+  const separator = ';';
   const keys = Object.keys(rows[0]);
   
   const csvContent = [
@@ -13,7 +13,7 @@ export function exportToCsv(filename, rows) {
         cell = cell instanceof Date
           ? cell.toLocaleString()
           : cell.toString().replace(/"/g, '""');
-        if (cell.search(/("|,|\n)/g) >= 0) {
+        if (cell.search(/("|,|;|\n)/g) >= 0) {
           cell = `"${cell}"`;
         }
         return cell;
@@ -21,7 +21,7 @@ export function exportToCsv(filename, rows) {
     })
   ].join('\n');
 
-  const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(["\uFEFFsep=" + separator + "\n" + csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement("a");
   if (link.download !== undefined) {
     const url = URL.createObjectURL(blob);

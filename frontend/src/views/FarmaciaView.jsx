@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../services/api';
+import MedicamentoModal from '../components/MedicamentoModal';
 
 const getToken = () => localStorage.getItem('token');
 
@@ -48,7 +49,7 @@ const IconPill = () => (
   </svg>
 );
 
-export default function FarmaciaView() {
+export default function FarmaciaView({ userRole }) {
   const [medicamentos, setMedicamentos] = useState([]);
   const [farmacias, setFarmacias]       = useState([]);
   const [loading, setLoading]           = useState(true);
@@ -56,9 +57,11 @@ export default function FarmaciaView() {
   const [search, setSearch]             = useState('');
   const [selected, setSelected]         = useState(null);
   const [tab, setTab]                   = useState('medicamentos');
+  const [showModal, setShowModal]       = useState(false);
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     const t = getToken();
+    setLoading(true);
     Promise.all([
       api('/medicamento',          { headers: { Authorization: `Bearer ${t}` } }),
       api('/medicamento/farmacias',{ headers: { Authorization: `Bearer ${t}` } }),
@@ -70,6 +73,10 @@ export default function FarmaciaView() {
       .catch(() => setError('No se pudieron cargar los datos. Verifique la conexión con el servidor.'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -104,9 +111,16 @@ export default function FarmaciaView() {
 
   return (
     <div>
-      <div className="page-header">
-        <h1>Farmacia y Medicamentos</h1>
-        <p>Inventario de medicamentos, stock por farmacia y trazabilidad de proveedores.</p>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1>Farmacia y Medicamentos</h1>
+          <p>Inventario de medicamentos, stock por farmacia y trazabilidad de proveedores.</p>
+        </div>
+        {(userRole === 'Administrador' || userRole === 'Farmacéutico') && (
+          <button className="btn-primary" onClick={() => setShowModal(true)}>
+            + Añadir Medicamento
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -128,6 +142,16 @@ export default function FarmaciaView() {
           <span className="fv-tab-count">{farmacias.length}</span>
         </button>
       </div>
+
+      {showModal && (
+        <MedicamentoModal 
+          onClose={() => setShowModal(false)}
+          onSaved={() => {
+            setShowModal(false);
+            fetchData();
+          }}
+        />
+      )}
 
       {tab === 'medicamentos' ? (
         <div className="fv-shell">
