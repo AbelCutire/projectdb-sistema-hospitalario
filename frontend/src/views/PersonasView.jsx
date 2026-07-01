@@ -86,6 +86,28 @@ export default function PersonasView({ loadingPersonas, filteredPersonas, resume
     }
   };
 
+  const handleExportCsv = () => {
+    import('../utils/exportUtils').then(({ exportToCsv }) => {
+      const exportData = personasFiltradas.map(p => {
+        const rolNombre = p.usuario?.rol?.nombre_rol || 'Sin cuenta';
+        const tipo = TIPO_LABEL(p);
+        const especialidad = p.empleado?.doctor?.especialidad?.nombre_especialidad || '';
+        return {
+          'DNI': p.dni || '',
+          'Nombre': p.nombre || '',
+          'Apellido': p.apellido || '',
+          'Rol en Sistema': rolNombre,
+          'Tipo': tipo,
+          'Especialidad': especialidad,
+          'Teléfono': p.telefono || '',
+          'Sexo': p.sexo || '',
+          'Fecha Nacimiento': p.fecha_nacimiento ? new Date(p.fecha_nacimiento).toLocaleDateString() : ''
+        };
+      });
+      exportToCsv(`personas_export_${new Date().getTime()}.csv`, exportData);
+    });
+  };
+
   const FILTRO_OPTIONS = ['Todos', 'Médico Especialista', 'Administrador', 'Enfermería', 'Paciente', 'Sin cuenta'];
 
   const personasFiltradas = useMemo(() => {
@@ -114,12 +136,27 @@ export default function PersonasView({ loadingPersonas, filteredPersonas, resume
       </div>
 
       <div className="panel">
-        <div className="panel-header">
+        <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div className="panel-title">Registros del Sistema</div>
             <div className="panel-subtitle">{resumenTexto} · mostrando {personasFiltradas.length}</div>
           </div>
-          <span className="badge badge-slate">{filteredPersonas.length} personas</span>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <span className="badge badge-slate">{filteredPersonas.length} personas</span>
+            <button
+              className="btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px' }}
+              onClick={handleExportCsv}
+              title="Exportar a CSV"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Exportar CSV
+            </button>
+          </div>
         </div>
 
         {/* Filtros por rol */}
