@@ -679,10 +679,13 @@ function DiagnosticoModal({ cita, farmacia, userProfile, onClose, onSaved }) {
                 />
               </div>
               <div style={{ marginBottom: 28 }}>
-                <div className="form-label" style={{ marginBottom: 8 }}>Descripción del Diagnóstico</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                  <div className="form-label">Descripción del Diagnóstico</div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--slate-400)' }}>(Incluya aquí recomendaciones o tratamientos no farmacológicos)</span>
+                </div>
                 <textarea
                   required rows={6}
-                  placeholder="Describa el diagnóstico clínico del paciente..."
+                  placeholder="Ej: El paciente presenta X. Se recomienda reposo por 3 días y fisioterapia..."
                   value={diagData.descripcion}
                   onChange={e => setDiagData(p => ({ ...p, descripcion: e.target.value }))}
                   style={{
@@ -727,24 +730,32 @@ function DiagnosticoModal({ cita, farmacia, userProfile, onClose, onSaved }) {
               </div>
 
               <div style={{ borderTop: '1px solid var(--slate-100)', paddingTop: 22, marginBottom: 20 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--slate-700)' }}>Medicamentos Prescritos</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+                  <div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--slate-700)' }}>Medicamentos Prescritos (Opcional)</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--slate-500)', marginTop: 2 }}>
+                      Si el tratamiento no requiere medicamentos, déjelo vacío.
+                    </div>
+                  </div>
                   <button type="button" className="btn-secondary" style={{ padding: '5px 12px', fontSize: '0.78rem' }} onClick={agregarMed}>+ Agregar</button>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {medicamentos.length === 0 && (
+                    <div style={{ padding: 16, textAlign: 'center', background: 'var(--slate-50)', borderRadius: 10, border: '1px dashed var(--slate-200)', color: 'var(--slate-500)', fontSize: '0.85rem' }}>
+                      No se emitirá ninguna receta médica.
+                    </div>
+                  )}
                   {medicamentos.map((m, idx) => (
                     <div key={idx} style={{ background: 'var(--slate-50)', border: '1px solid var(--slate-200)', borderRadius: 12, padding: '16px 14px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                         <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--slate-400)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
                           Medicamento {idx + 1}
                         </span>
-                        {medicamentos.length > 1 && (
-                          <button type="button" onClick={() => quitarMed(idx)}
-                            style={{ background: 'none', border: 'none', color: 'var(--red-400)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>
-                            Quitar
-                          </button>
-                        )}
+                        <button type="button" onClick={() => quitarMed(idx)}
+                          style={{ background: 'none', border: 'none', color: 'var(--red-400)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>
+                          Quitar
+                        </button>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                         <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 10 }}>
