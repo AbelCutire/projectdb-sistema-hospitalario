@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 
 import prisma from '../config/database';
-
+import { logAction } from '../utils/auditService';
 // GET /persona — incluye usuario+rol para que el admin vea el tipo de cada persona
 export const getPersonas = async (req: Request, res: Response) => {
   try {
@@ -157,7 +157,10 @@ export const updateRolPersona = async (req: Request, res: Response) => {
 
     // Registrar en auditoría
     const userId = (req as any).user?.id_usuario || null;
+<<<<<<< HEAD
     const { logAction } = await import('../utils/auditService.js');
+=======
+>>>>>>> eb19a4ba20c73359629be2c04abebb6dfcee5cf3
     await logAction(userId, 'ACTUALIZAR_ROL', 'usuario', `Se cambió el rol de persona ID: ${id_persona} a rol ID: ${id_rol}`);
 
     res.json(actualizado);
