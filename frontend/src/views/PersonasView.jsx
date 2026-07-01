@@ -19,7 +19,7 @@ const TIPO_LABEL = (persona) => {
   return 'Sin tipo';
 };
 
-export default function PersonasView({ loadingPersonas, filteredPersonas, resumenTexto }) {
+export default function PersonasView({ loadingPersonas, filteredPersonas, resumenTexto, userRole, userProfile }) {
   const [rolFiltro, setRolFiltro]     = useState('Todos');
   const [rolModal, setRolModal]       = useState(null); // persona seleccionada para cambiar rol
   const [roles, setRoles]             = useState([]);
@@ -310,6 +310,8 @@ export default function PersonasView({ loadingPersonas, filteredPersonas, resume
         <DetallesPersonaModal 
           personaId={detallesModalId} 
           onClose={() => setDetallesModalId(null)} 
+          userRole={userRole}
+          userProfile={userProfile}
         />
       )}
 

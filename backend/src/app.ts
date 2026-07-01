@@ -48,7 +48,7 @@ app.use('/medicamento',  authMiddleware, medicamentoRoutes);
 app.use('/departamento', authMiddleware, departamentoRoutes);
 app.use('/camilla',      authMiddleware, camillaRoutes);
 app.use('/auditoria',    authMiddleware, roleMiddleware('Administrador'), auditoriaRoutes);
-app.use('/persona',      authMiddleware, roleMiddleware('Administrador'), personaRoutes);
+app.use('/persona',      authMiddleware, personaRoutes);
 
 app.get('/health', async (req: express.Request, res: express.Response) => {
   try {

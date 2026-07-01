@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api';
+import DetallesPersonaModal from '../components/DetallesPersonaModal';
 
 const HORARIO_INICIO = 8;   // 8:00
 const HORARIO_FIN   = 17;  // 17:00 (última cita 17:30)
@@ -49,6 +50,7 @@ export default function CitasView({ userRole, userProfile }) {
   const [citaToCancel, setCitaToCancel] = useState(null);
   const [isCanceling, setIsCanceling]   = useState(false);
   const [alertMsg, setAlertMsg]         = useState({ show: false, message: '', type: 'success' });
+  const [detallesModalId, setDetallesModalId] = useState(null);
 
   const [nuevaCita, setNuevaCita] = useState({
     id_paciente: '', id_doctor: '', id_consultorio: '', fecha: '', hora: ''
@@ -79,7 +81,7 @@ export default function CitasView({ userRole, userProfile }) {
       if (userRole === 'Médico Especialista') {
         const [cons, farm] = await Promise.all([
           api('/consultorio', { headers }).catch(() => []),
-          api('/farmacia',    { headers }).catch(() => [])
+          api('/medicamento/farmacias', { headers }).catch(() => [])
         ]);
         setConsultorios(cons || []);
         setFarmacia(farm || []);
@@ -341,7 +343,16 @@ export default function CitasView({ userRole, userProfile }) {
         </div>
 
         {misCitas.length === 0 ? (
-          <div className="empty-state"><p>No hay citas registradas.</p></div>
+          <div className="empty-state">
+            <p style={{ fontWeight: 600, fontSize: '1.1rem', color: 'var(--slate-700)' }}>No hay citas médicas registradas actualmente.</p>
+            <p style={{ fontSize: '0.9rem', color: 'var(--slate-500)', marginTop: 8, maxWidth: 600, lineHeight: 1.5 }}>
+              {userRole === 'Administrador' 
+                ? 'Este módulo sirve para que los administradores agenden citas (asignando un doctor, paciente y consultorio) y gestionen la cola de atención del hospital.'
+                : userRole === 'Médico Especialista'
+                ? 'Aquí aparecerán los pacientes que han reservado una cita contigo para que puedas iniciar su atención y recetar medicamentos.'
+                : 'Aquí puedes solicitar una nueva cita médica y revisar tus citas próximas.'}
+            </p>
+          </div>
         ) : (
           <div className="data-table-wrapper">
             <table className="data-table">
@@ -378,7 +389,16 @@ export default function CitasView({ userRole, userProfile }) {
                         {horaStr(cita.hora)}
                       </td>
                       {userRole !== 'Paciente' && (
-                        <td>{cita.paciente?.persona?.nombre} {cita.paciente?.persona?.apellido}</td>
+                        <td>
+                          <button
+                            className="btn-link"
+                            style={{ padding: 0, color: 'var(--blue-600)', fontWeight: 600, textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer' }}
+                            onClick={() => setDetallesModalId(cita.paciente?.id_persona)}
+                            title="Ver expediente del paciente"
+                          >
+                            {cita.paciente?.persona?.nombre} {cita.paciente?.persona?.apellido}
+                          </button>
+                        </td>
                       )}
                       {userRole !== 'Médico Especialista' && (
                         <td>Dr. {cita.doctor?.empleado?.persona?.nombre} {cita.doctor?.empleado?.persona?.apellido}</td>
@@ -472,6 +492,16 @@ export default function CitasView({ userRole, userProfile }) {
         </>
       )}
 
+      {/* Modal Detalles Persona */}
+      {detallesModalId && (
+        <DetallesPersonaModal
+          personaId={detallesModalId}
+          onClose={() => setDetallesModalId(null)}
+          userRole={userRole}
+          userProfile={userProfile}
+        />
+      )}
+
       {/* Alerta tipo Toast */}
       {alertMsg.show && (
         <div style={{
@@ -510,12 +540,12 @@ function DiagnosticoModal({ cita, farmacia, userProfile, onClose, onSaved }) {
   });
 
   const [medicamentos, setMedicamentos] = useState([
-    { id_farmacia: '', dosis: '', frecuencia: '', duracion: '' }
+    { id_farmacia: '', nombre_medicamento: '', dosis: '', frecuencia: '', duracion: '' }
   ]);
 
   const [savedDiagId, setSavedDiagId] = useState(null);
 
-  const agregarMed    = () => setMedicamentos(p => [...p, { id_farmacia: '', dosis: '', frecuencia: '', duracion: '' }]);
+  const agregarMed    = () => setMedicamentos(p => [...p, { id_farmacia: '', nombre_medicamento: '', dosis: '', frecuencia: '', duracion: '' }]);
   const quitarMed     = (i) => setMedicamentos(p => p.filter((_, idx) => idx !== i));
   const updateMed     = (i, f, v) => setMedicamentos(p => p.map((m, idx) => idx === i ? { ...m, [f]: v } : m));
 
@@ -561,7 +591,15 @@ function DiagnosticoModal({ cita, farmacia, userProfile, onClose, onSaved }) {
       });
 
       // Receta solo si hay medicamentos válidos
-      const detalles = medicamentos.filter(m => m.id_farmacia && m.dosis && m.frecuencia && m.duracion);
+      const detalles = medicamentos
+        .filter(m => m.id_farmacia && m.nombre_medicamento && m.dosis && m.frecuencia && m.duracion)
+        .map(m => ({
+          id_farmacia: parseInt(m.id_farmacia, 10),
+          dosis: `${m.nombre_medicamento} | ${m.dosis}`,
+          frecuencia: m.frecuencia,
+          duracion: m.duracion
+        }));
+
       if (detalles.length > 0) {
         await api('/receta', {
           method: 'POST',
@@ -709,19 +747,39 @@ function DiagnosticoModal({ cita, farmacia, userProfile, onClose, onSaved }) {
                         )}
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                        <div style={{ gridColumn: '1 / -1' }}>
-                          <div className="form-label" style={{ marginBottom: 4 }}>Fármaco</div>
-                          <select className="form-select" style={{ width: '100%' }}
-                            value={m.id_farmacia}
-                            onChange={e => updateMed(idx, 'id_farmacia', e.target.value)}
-                          >
-                            <option value="">Seleccione fármaco</option>
-                            {farmacia.map(f => (
-                              <option key={f.id_farmacia} value={f.id_farmacia}>
-                                {f.nombre} (Stock: {f.stock})
-                              </option>
-                            ))}
-                          </select>
+                        <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 10 }}>
+                          <div style={{ flex: 1 }}>
+                            <div className="form-label" style={{ marginBottom: 4 }}>Farmacia</div>
+                            <select className="form-select" style={{ width: '100%' }}
+                              value={m.id_farmacia}
+                              onChange={e => {
+                                updateMed(idx, 'id_farmacia', e.target.value);
+                                updateMed(idx, 'nombre_medicamento', '');
+                              }}
+                            >
+                              <option value="">Seleccione farmacia</option>
+                              {farmacia.map(f => (
+                                <option key={f.id_farmacia} value={f.id_farmacia}>
+                                  {f.nombre}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div className="form-label" style={{ marginBottom: 4 }}>Medicamento</div>
+                            <select className="form-select" style={{ width: '100%' }}
+                              value={m.nombre_medicamento}
+                              onChange={e => updateMed(idx, 'nombre_medicamento', e.target.value)}
+                              disabled={!m.id_farmacia}
+                            >
+                              <option value="">Seleccione medicamento</option>
+                              {farmacia.find(f => String(f.id_farmacia) === String(m.id_farmacia))?.items_stock?.map((s, si) => (
+                                <option key={si} value={s.medicamento?.nombre}>
+                                  {s.medicamento?.nombre} (Stock: {s.cantidad})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
                         <div>
                           <div className="form-label" style={{ marginBottom: 4 }}>Dosis</div>

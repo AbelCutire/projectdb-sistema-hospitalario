@@ -577,9 +577,12 @@ function PatientDashboard({ citas, recetas, userProfile }) {
               r.detalle_receta?.map((det, idx) => (
                 <div key={idx} className="prescription-item">
                   <div>
-                    <div className="prescription-name">{det.farmacia?.nombre || '—'}</div>
+                    <div className="prescription-name">
+                      {det.dosis?.includes(' | ') ? det.dosis.split(' | ')[0] : (det.farmacia?.nombre || '—')}
+                    </div>
                     <div className="prescription-meta">
-                      Dosis: {det.dosis} · Frecuencia: {det.frecuencia} · Duración: {det.duracion}
+                      Dosis: {det.dosis?.includes(' | ') ? det.dosis.split(' | ')[1] : det.dosis} · Frecuencia: {det.frecuencia} · Duración: {det.duracion}
+                      {det.dosis?.includes(' | ') && ` · Farmacia: ${det.farmacia?.nombre}`}
                     </div>
                   </div>
                   <span className="badge badge-violet">Activo</span>

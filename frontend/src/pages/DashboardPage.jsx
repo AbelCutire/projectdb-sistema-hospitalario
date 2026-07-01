@@ -268,6 +268,8 @@ export default function DashboardPage() {
               loadingPersonas={loadingPersonas}
               filteredPersonas={filteredPersonas}
               resumenTexto={resumenTexto}
+              userRole={userRole}
+              userProfile={userProfile}
             />
           )}
 

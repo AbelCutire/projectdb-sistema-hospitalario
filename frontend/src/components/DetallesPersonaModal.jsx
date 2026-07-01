@@ -8,7 +8,7 @@ const ROLE_COLORS = {
   'Paciente':            'badge-emerald',
 };
 
-export default function DetallesPersonaModal({ personaId, onClose }) {
+export default function DetallesPersonaModal({ personaId, onClose, userRole, userProfile }) {
   const [detalles, setDetalles] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -161,16 +161,21 @@ export default function DetallesPersonaModal({ personaId, onClose }) {
             </div>
           )}
 
-          {activeTab === 'citas' && isPaciente && (
-            <div>
-              {p.paciente.cita && p.paciente.cita.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {p.paciente.cita.map(cita => (
-                    <div key={cita.id_cita} style={{ border: '1px solid var(--slate-200)', borderRadius: 12, padding: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--slate-500)', marginBottom: 6 }}>
-                          {new Date(cita.fecha).toLocaleDateString()} · {new Date(cita.hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </div>
+          {activeTab === 'citas' && isPaciente && (() => {
+            const citasAMostrar = (userRole === 'Médico Especialista')
+              ? (p.paciente.cita || []).filter(c => c.id_doctor === userProfile?.id_persona)
+              : (p.paciente.cita || []);
+            
+            return (
+              <div>
+                {citasAMostrar.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {citasAMostrar.map(cita => (
+                      <div key={cita.id_cita} style={{ border: '1px solid var(--slate-200)', borderRadius: 12, padding: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontSize: '0.85rem', color: 'var(--slate-500)', marginBottom: 6 }}>
+                            {new Date(cita.fecha).toLocaleDateString()} · {new Date(cita.hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
                         <div style={{ fontWeight: 600, color: 'var(--slate-800)', fontSize: '1.05rem' }}>
                           Dr. {cita.doctor?.empleado?.persona?.nombre} {cita.doctor?.empleado?.persona?.apellido}
                         </div>
@@ -182,17 +187,18 @@ export default function DetallesPersonaModal({ personaId, onClose }) {
                         <span className={`badge ${cita.estado === 'Completada' ? 'badge-emerald' : cita.estado === 'Cancelada' ? 'badge-red' : 'badge-blue'}`}>
                           {cita.estado}
                         </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <p>Este paciente no tiene citas registradas en el historial.</p>
-                </div>
-              )}
-            </div>
-          )}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-state">
+                    <p>{userRole === 'Médico Especialista' ? 'No tienes citas registradas con este paciente.' : 'Este paciente no tiene citas registradas en el historial.'}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {activeTab === 'laboral' && isEmpleado && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
