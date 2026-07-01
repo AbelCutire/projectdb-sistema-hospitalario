@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { api } from '../services/api';
 
 export default function RegisterPage() {
@@ -30,7 +31,13 @@ export default function RegisterPage() {
       });
       
       if (data.otpFallback) {
-        alert(`Aviso del Sistema:\n\nSe ha habilitado la verificación interna. Su código de seguridad temporal es: ${data.otpFallback}\n\nPor favor, introdúzcalo en la siguiente pantalla para validar su identidad.`);
+        toast.success(
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <span style={{ fontWeight: 600, color: '#0f172a' }}>Verificación Interna Habilitada</span>
+            <span style={{ color: '#475569' }}>Su código de seguridad es: <strong>${data.otpFallback}</strong></span>
+          </div>,
+          { duration: 10000 }
+        );
       }
       
       // Redirect to verify page with email in query string

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { api } from '../services/api';
 
+import toast from 'react-hot-toast';
+
 export default function VerifyEmailPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,10 +35,12 @@ export default function VerifyEmailPage() {
           otp: otp.trim()
         })
       });
-      alert('Registro completado y verificado con éxito. Ahora puede iniciar sesión.');
+      toast.success('¡Registro completado! Su cuenta ha sido verificada y activada exitosamente.');
       navigate('/login');
     } catch (err) {
-      setError(err.message || 'Código incorrecto o expirado.');
+      const msg = err.message || 'El código de seguridad es incorrecto o ha expirado.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

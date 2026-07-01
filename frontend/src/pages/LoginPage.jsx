@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { api } from '../services/api';
-
 export default function LoginPage() {
   const navigate = useNavigate();
   const [viewMode, setViewMode]       = useState('login'); // 'login' | 'recover' | 'register'
@@ -53,14 +53,23 @@ export default function LoginPage() {
       });
       
       if (data.resetLinkFallback) {
-        alert(`Aviso del Sistema:\n\nSe ha habilitado la recuperación interna. Para restablecer su contraseña, por favor acceda al siguiente enlace seguro:\n\nhttps://projectdb-sistema-hospitalario-production.up.railway.app${data.resetLinkFallback}`);
+        toast.success(
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <span style={{ fontWeight: 600, color: '#0f172a' }}>Recuperación Interna</span>
+            <span style={{ color: '#475569' }}>Acceda al enlace para restablecer su contraseña:</span>
+            <a href={`https://projectdb-sistema-hospitalario-production.up.railway.app${data.resetLinkFallback}`} target="_blank" rel="noreferrer" style={{ color: '#3b82f6', textDecoration: 'underline', wordBreak: 'break-all' }}>Abrir Enlace</a>
+          </div>,
+          { duration: 15000 }
+        );
       } else {
-        alert('Si el correo existe, recibirá instrucciones para restablecer su contraseña.');
+        toast.success('Las instrucciones de recuperación han sido enviadas a su correo electrónico de forma segura.');
       }
       
       setViewMode('login');
     } catch (err) {
-      setError(err.message || 'No se pudo enviar el correo de recuperación.');
+      const msg = err.message || 'No se pudo enviar el correo de recuperación.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
