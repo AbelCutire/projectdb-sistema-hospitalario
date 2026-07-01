@@ -4,7 +4,9 @@ import {
   getMedicamentoById, 
   getFarmacias, 
   getMetadataFormulario, 
-  createMedicamento 
+  createMedicamento,
+  updateMedicamento,
+  deleteMedicamento
 } from '../controllers/medicamentoController';
 import { roleMiddleware } from '../middlewares/roleMiddleware';
 
@@ -16,5 +18,7 @@ router.get('/farmacias', getFarmacias);
 router.get('/:id', getMedicamentoById);
 
 router.post('/', roleMiddleware('Administrador', 'Farmacéutico'), createMedicamento);
+router.put('/:id', roleMiddleware('Administrador', 'Farmacéutico'), updateMedicamento);
+router.delete('/:id', roleMiddleware('Administrador', 'Farmacéutico'), deleteMedicamento);
 
 export default router;

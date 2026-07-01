@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 
-export default function MedicamentoModal({ onClose, onSaved }) {
+export default function MedicamentoModal({ onClose, onSaved, medicamentoToEdit = null }) {
   const [loading, setLoading] = useState(false);
   const [metadata, setMetadata] = useState(null);
 
   // Catálogo fields
-  const [nombre, setNombre] = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [idAccionTerapeutica, setIdAccionTerapeutica] = useState('');
-  const [idMonodroga, setIdMonodroga] = useState('');
-  const [codigoLaboratorio, setCodigoLaboratorio] = useState('');
+  const [nombre, setNombre] = useState(medicamentoToEdit ? medicamentoToEdit.nombre : '');
+  const [descripcion, setDescripcion] = useState(medicamentoToEdit ? (medicamentoToEdit.descripcion || '') : '');
+  const [accionTerapeutica, setAccionTerapeutica] = useState(medicamentoToEdit ? medicamentoToEdit.accion_terapeutica?.tipo : '');
+  const [monodroga, setMonodroga] = useState(medicamentoToEdit ? medicamentoToEdit.monodroga?.descripcion : '');
+  const [codigoLaboratorio, setCodigoLaboratorio] = useState(medicamentoToEdit ? medicamentoToEdit.codigo_laboratorio : '');
 
   // Stock fields (optional)
   const [idFarmacia, setIdFarmacia] = useState('');
@@ -43,12 +43,12 @@ export default function MedicamentoModal({ onClose, onSaved }) {
       const payload = {
         nombre,
         descripcion,
-        id_accion_terapeutica: idAccionTerapeutica,
-        id_monodroga: idMonodroga,
+        accion_terapeutica: accionTerapeutica,
+        monodroga: monodroga,
         codigo_laboratorio: codigoLaboratorio,
       };
 
-      if (idFarmacia && codigoPresentacion && cantidad) {
+      if (!medicamentoToEdit && idFarmacia && codigoPresentacion && cantidad) {
         payload.stock = {
           id_farmacia: idFarmacia,
           codigo_presentacion: codigoPresentacion,
@@ -56,11 +56,19 @@ export default function MedicamentoModal({ onClose, onSaved }) {
         };
       }
 
-      await api('/medicamento', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: JSON.stringify(payload)
-      });
+      if (medicamentoToEdit) {
+        await api(`/medicamento/${medicamentoToEdit.codigo}`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        await api('/medicamento', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: JSON.stringify(payload)
+        });
+      }
       onSaved();
     } catch (err) {
       setErrorMsg(err.message || 'Ocurrió un error inesperado al intentar guardar el medicamento.');
@@ -86,8 +94,12 @@ export default function MedicamentoModal({ onClose, onSaved }) {
             <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/><circle cx="12" cy="12" r="3"/></svg>
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--slate-800)' }}>Añadir Medicamento</h2>
-            <div style={{ color: 'var(--slate-500)', fontSize: '0.85rem', marginTop: 2 }}>Registrar en el catálogo general del hospital</div>
+            <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--slate-800)' }}>
+              {medicamentoToEdit ? 'Editar Medicamento' : 'Añadir Medicamento'}
+            </h2>
+            <div style={{ color: 'var(--slate-500)', fontSize: '0.85rem', marginTop: 2 }}>
+              {medicamentoToEdit ? 'Modificar datos del catálogo' : 'Registrar en el catálogo general del hospital'}
+            </div>
           </div>
         </div>
 
@@ -106,13 +118,15 @@ export default function MedicamentoModal({ onClose, onSaved }) {
           >
             Datos del Catálogo
           </button>
-          <button 
-            type="button" 
-            onClick={() => setActiveTab('stock')}
-            style={{ padding: '8px 16px', background: 'transparent', border: 'none', fontWeight: 600, color: activeTab === 'stock' ? 'var(--emerald-600)' : 'var(--slate-400)', borderBottom: activeTab === 'stock' ? '2px solid var(--emerald-600)' : '2px solid transparent', cursor: 'pointer', transition: 'all 0.2s' }}
-          >
-            Stock Inicial (Opcional)
-          </button>
+          {!medicamentoToEdit && (
+            <button 
+              type="button" 
+              onClick={() => setActiveTab('stock')}
+              style={{ padding: '8px 16px', background: 'transparent', border: 'none', fontWeight: 600, color: activeTab === 'stock' ? 'var(--emerald-600)' : 'var(--slate-400)', borderBottom: activeTab === 'stock' ? '2px solid var(--emerald-600)' : '2px solid transparent', cursor: 'pointer', transition: 'all 0.2s' }}
+            >
+              Stock Inicial (Opcional)
+            </button>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -131,21 +145,21 @@ export default function MedicamentoModal({ onClose, onSaved }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
                 <label className="form-label">Acción Terapéutica</label>
-                <select className="form-input" required value={idAccionTerapeutica} onChange={e => setIdAccionTerapeutica(e.target.value)}>
-                  <option value="">Seleccione...</option>
+                <input type="text" list="acciones_list" className="form-input" required value={accionTerapeutica} onChange={e => setAccionTerapeutica(e.target.value)} placeholder="Seleccione o escriba una nueva" />
+                <datalist id="acciones_list">
                   {metadata.acciones.map(a => (
-                    <option key={a.id_accion_terapeutica} value={a.id_accion_terapeutica}>{a.tipo}</option>
+                    <option key={a.id_accion_terapeutica} value={a.tipo} />
                   ))}
-                </select>
+                </datalist>
               </div>
               <div>
                 <label className="form-label">Monodroga</label>
-                <select className="form-input" required value={idMonodroga} onChange={e => setIdMonodroga(e.target.value)}>
-                  <option value="">Seleccione...</option>
+                <input type="text" list="monodrogas_list" className="form-input" required value={monodroga} onChange={e => setMonodroga(e.target.value)} placeholder="Seleccione o escriba una nueva" />
+                <datalist id="monodrogas_list">
                   {metadata.monodrogas.map(m => (
-                    <option key={m.id_monodroga} value={m.id_monodroga}>{m.descripcion}</option>
+                    <option key={m.id_monodroga} value={m.descripcion} />
                   ))}
-                </select>
+                </datalist>
               </div>
             </div>
 

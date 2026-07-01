@@ -103,26 +103,44 @@ export const createMedicamento = async (req: Request, res: Response) => {
   const { 
     nombre, 
     descripcion, 
-    id_accion_terapeutica, 
-    id_monodroga, 
-    codigo_laboratorio,
+    accion_terapeutica, // text
+    monodroga,          // text
+    codigo_laboratorio, // ID
     stock // opcional: { id_farmacia, codigo_presentacion, cantidad }
   } = req.body;
 
   try {
     const nuevoMedicamento = await prisma.$transaction(async (tx) => {
-      // 1. Crear el medicamento en el catálogo
+      // 1. Find or Create Accion Terapeutica
+      let accionId = 0;
+      if (accion_terapeutica) {
+        let acc = await tx.accion_terapeutica.findFirst({ where: { tipo: accion_terapeutica } });
+        if (!acc) acc = await tx.accion_terapeutica.create({ data: { tipo: accion_terapeutica } });
+        accionId = acc.id_accion_terapeutica;
+      }
+
+      // 2. Find or Create Monodroga
+      let monoId = 0;
+      if (monodroga) {
+        let mon = await tx.monodroga.findFirst({ where: { descripcion: monodroga } });
+        if (!mon) mon = await tx.monodroga.create({ data: { descripcion: monodroga } });
+        monoId = mon.id_monodroga;
+      }
+
+      if (!accionId || !monoId) throw new Error("Acción terapéutica y monodroga son requeridos.");
+
+      // 3. Crear el medicamento en el catálogo
       const med = await tx.medicamento.create({
         data: {
           nombre,
           descripcion,
-          id_accion_terapeutica: Number(id_accion_terapeutica),
-          id_monodroga: Number(id_monodroga),
+          id_accion_terapeutica: accionId,
+          id_monodroga: monoId,
           codigo_laboratorio: Number(codigo_laboratorio)
         }
       });
 
-      // 2. Si se proporcionó stock inicial, crearlo asociado al nuevo medicamento
+      // 4. Si se proporcionó stock inicial, crearlo asociado al nuevo medicamento
       if (stock && stock.id_farmacia && stock.codigo_presentacion && stock.cantidad) {
         await tx.stock.create({
           data: {
@@ -138,8 +156,74 @@ export const createMedicamento = async (req: Request, res: Response) => {
     });
 
     res.status(201).json(nuevoMedicamento);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error al crear medicamento:', error);
-    res.status(500).json({ error: 'Error interno al crear medicamento.' });
+    res.status(500).json({ error: error.message || 'Error interno al crear medicamento.' });
+  }
+};
+
+export const updateMedicamento = async (req: Request, res: Response) => {
+  const codigo = parseInt(req.params.id as string, 10);
+  const { 
+    nombre, 
+    descripcion, 
+    accion_terapeutica, 
+    monodroga, 
+    codigo_laboratorio 
+  } = req.body;
+
+  try {
+    const medActualizado = await prisma.$transaction(async (tx) => {
+      let accionId = 0;
+      if (accion_terapeutica) {
+        let acc = await tx.accion_terapeutica.findFirst({ where: { tipo: accion_terapeutica } });
+        if (!acc) acc = await tx.accion_terapeutica.create({ data: { tipo: accion_terapeutica } });
+        accionId = acc.id_accion_terapeutica;
+      }
+
+      let monoId = 0;
+      if (monodroga) {
+        let mon = await tx.monodroga.findFirst({ where: { descripcion: monodroga } });
+        if (!mon) mon = await tx.monodroga.create({ data: { descripcion: monodroga } });
+        monoId = mon.id_monodroga;
+      }
+
+      if (!accionId || !monoId) throw new Error("Acción terapéutica y monodroga son requeridos.");
+
+      return await tx.medicamento.update({
+        where: { codigo },
+        data: {
+          nombre,
+          descripcion,
+          id_accion_terapeutica: accionId,
+          id_monodroga: monoId,
+          codigo_laboratorio: Number(codigo_laboratorio)
+        }
+      });
+    });
+    res.json(medActualizado);
+  } catch (error: any) {
+    console.error('Error al actualizar medicamento:', error);
+    res.status(500).json({ error: error.message || 'Error interno al actualizar medicamento.' });
+  }
+};
+
+export const deleteMedicamento = async (req: Request, res: Response) => {
+  const codigo = parseInt(req.params.id as string, 10);
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Delete stock first (cascade doesn't exist on this relation)
+      await tx.stock.deleteMany({
+        where: { codigo_medicamento: codigo }
+      });
+      // Delete medication
+      await tx.medicamento.delete({
+        where: { codigo }
+      });
+    });
+    res.status(204).send();
+  } catch (error: any) {
+    console.error('Error al eliminar medicamento:', error);
+    res.status(500).json({ error: error.message || 'Error interno al eliminar medicamento.' });
   }
 };

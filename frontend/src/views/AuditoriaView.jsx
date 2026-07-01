@@ -80,7 +80,7 @@ export default function AuditoriaView() {
               placeholder="Buscar acción, tabla, usuario o DNI..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ width: '100%', padding: '8px 16px', borderRadius: 20, border: '1px solid var(--slate-200)', outline: 'none' }}
+              style={{ width: '100%', borderRadius: 20, outline: 'none' }}
             />
           </div>
         </div>
