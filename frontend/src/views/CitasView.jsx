@@ -30,7 +30,8 @@ function horaStr(isoStr) {
 
 function fechaStr(isoStr) {
   if (!isoStr) return '—';
-  return new Date(isoStr).toLocaleDateString('es-ES');
+  const d = new Date(isoStr);
+  return `${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}`;
 }
 
 /* ─────────────────────────────────────────────────────────────────────

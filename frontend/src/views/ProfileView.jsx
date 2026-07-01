@@ -170,17 +170,17 @@ export default function ProfileView({ userProfile, userRole, onProfileUpdate, on
                     <div className="pv2-field">
                       <label className="pv2-field-label">Nombres</label>
                       <input type="text" name="nombre" required className="pv2-field-input"
-                        value={formData.nombre} onChange={handleChange} />
+                        value={formData.nombre} onChange={handleChange} disabled={userRole !== 'Administrador'} />
                     </div>
                     <div className="pv2-field">
                       <label className="pv2-field-label">Apellidos</label>
                       <input type="text" name="apellido" required className="pv2-field-input"
-                        value={formData.apellido} onChange={handleChange} />
+                        value={formData.apellido} onChange={handleChange} disabled={userRole !== 'Administrador'} />
                     </div>
                     <div className="pv2-field">
                       <label className="pv2-field-label">DNI</label>
                       <input type="text" name="dni" required className="pv2-field-input"
-                        value={formData.dni} onChange={handleChange} />
+                        value={formData.dni} onChange={handleChange} disabled={userRole !== 'Administrador'} />
                     </div>
                     <div className="pv2-field">
                       <label className="pv2-field-label">Teléfono</label>
@@ -190,7 +190,7 @@ export default function ProfileView({ userProfile, userRole, onProfileUpdate, on
                     <div className="pv2-field">
                       <label className="pv2-field-label">Sexo</label>
                       <select name="sexo" required className="pv2-field-input"
-                        value={formData.sexo} onChange={handleChange}>
+                        value={formData.sexo} onChange={handleChange} disabled={userRole !== 'Administrador'}>
                         <option value="" disabled>Seleccione...</option>
                         <option value="Masculino">Masculino</option>
                         <option value="Femenino">Femenino</option>
@@ -199,7 +199,7 @@ export default function ProfileView({ userProfile, userRole, onProfileUpdate, on
                     <div className="pv2-field">
                       <label className="pv2-field-label">Fecha de Nacimiento</label>
                       <input type="date" name="fecha_nacimiento" required className="pv2-field-input"
-                        value={formData.fecha_nacimiento} onChange={handleChange} />
+                        value={formData.fecha_nacimiento} onChange={handleChange} disabled={userRole !== 'Administrador'} />
                     </div>
                     <div className="pv2-field pv2-field-full">
                       <label className="pv2-field-label">Dirección</label>

@@ -11,7 +11,7 @@ router.get('/',         adminOnly, getPersonas);
 router.post('/',        adminOnly, createPersona);
 router.get('/:id/detalles', adminOrDoctor, getPersonaDetalles);
 router.get('/:id',      adminOnly, getPersonaById);
-router.put('/:id',      adminOnly, updatePersona);
+router.put('/:id',      updatePersona);
 router.put('/:id/rol',  adminOnly, updateRolPersona);
 router.delete('/:id',   adminOnly, deletePersona);
 

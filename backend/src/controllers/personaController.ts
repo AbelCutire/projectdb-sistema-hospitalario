@@ -69,25 +69,39 @@ export const getPersonaById = async (req: Request, res: Response) => {
 
 export const updatePersona = async (req: Request, res: Response) => {
   try {
+    const user = (req as any).user;
+    if (!user) {
+      return res.status(401).json({ error: 'No autorizado. Se requiere token.' });
+    }
+
     const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const id = rawId ? parseInt(rawId, 10) : NaN;
     if (isNaN(id)) {
       return res.status(400).json({ error: 'ID inválido' });
     }
 
+    const isAdmin = user.rol === 'Administrador';
+    const isSelf = user.id_persona === id;
+
+    if (!isAdmin && !isSelf) {
+      return res.status(403).json({ error: 'Acceso denegado. Solo puede editar su propio perfil.' });
+    }
+
     const { nombre, apellido, dni, telefono, direccion, sexo, fecha_nacimiento } = req.body;
+
+    let dataToUpdate: any = { telefono, direccion };
+    
+    if (isAdmin) {
+      if (nombre !== undefined) dataToUpdate.nombre = nombre;
+      if (apellido !== undefined) dataToUpdate.apellido = apellido;
+      if (dni !== undefined) dataToUpdate.dni = dni;
+      if (sexo !== undefined) dataToUpdate.sexo = sexo;
+      if (fecha_nacimiento !== undefined) dataToUpdate.fecha_nacimiento = fecha_nacimiento ? new Date(fecha_nacimiento) : null;
+    }
 
     const personaActualizada = await prisma.persona.update({
       where: { id_persona: id },
-      data: {
-        nombre,
-        apellido,
-        dni,
-        telefono,
-        direccion,
-        sexo,
-        fecha_nacimiento: fecha_nacimiento ? new Date(fecha_nacimiento) : undefined,
-      },
+      data: dataToUpdate,
     });
 
     res.json(personaActualizada);
