@@ -7,6 +7,7 @@ import CitasView from '../views/CitasView';
 import ProfileView from '../views/ProfileView';
 import ClinicoView from '../views/ClinicoView';
 import FarmaciaView from '../views/FarmaciaView';
+import AuditoriaView from '../views/AuditoriaView';
 
 // Map URL segment -> view id
 const VIEW_MAP = {
@@ -15,6 +16,7 @@ const VIEW_MAP = {
   'citas':     'citas-view',
   'historial': 'clinico-view',
   'farmacia':  'farmacia-view',
+  'auditoria': 'auditoria-view',
   'perfil':    'profile-view',
 };
 const VIEW_REVERSE = Object.fromEntries(Object.entries(VIEW_MAP).map(([k, v]) => [v, k]));
@@ -58,6 +60,12 @@ const NAV_ICONS = {
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
       <circle cx="12" cy="7" r="4"/>
+    </svg>
+  ),
+  'auditoria-view': (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      <path d="m9 12 2 2 4-4"/>
     </svg>
   ),
 };
@@ -166,6 +174,7 @@ export default function DashboardPage() {
       { id: 'citas-view',     label: 'Citas Médicas',     roles: ['Administrador', 'Médico Especialista', 'Paciente'] },
       { id: 'clinico-view',   label: 'Historial Clínico', roles: ['Administrador', 'Médico Especialista', 'Paciente'] },
       { id: 'farmacia-view',  label: 'Farmacia',          roles: ['Administrador'] },
+      { id: 'auditoria-view', label: 'Auditoría',         roles: ['Administrador'] },
       { id: 'profile-view',   label: 'Perfil',            roles: ['Administrador', 'Médico Especialista', 'Enfermería', 'Paciente'] },
     ];
     return all.filter(item => item.roles.includes(userRole));
@@ -182,11 +191,11 @@ export default function DashboardPage() {
       {/* ── Sidebar ─────────────────────────────────── */}
       <aside className="sidebar">
         <div className="logo">
-          <div className="logo-mark">
-            <div className="logo-icon"></div>
-            <h2>MedicDB</h2>
+          <div className="logo-mark" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="logo-icon" style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)', boxShadow: '0 4px 12px rgba(37,99,235,0.4)', borderRadius: 10 }}></div>
+            <h2 style={{ color: '#ffffff', fontWeight: 800, letterSpacing: '-0.5px', margin: 0 }}>EsSalud<span style={{ color: '#60A5FA' }}>+</span></h2>
           </div>
-          <small>Sistema Hospitalario</small>
+          <small style={{ color: '#94A3B8', fontWeight: 600, letterSpacing: '1px', marginTop: 4, display: 'block', fontSize: '0.65rem' }}>SISTEMA HOSPITALARIO</small>
         </div>
 
         <nav className="sidebar-nav">
@@ -205,19 +214,6 @@ export default function DashboardPage() {
           </div>
         </nav>
 
-        <div className="sidebar-footer">
-          <div className="sidebar-help">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-            <div>
-              <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#e2e8f0' }}>¿Necesitas ayuda?</div>
-              <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)' }}>Contáctanos con soporte</div>
-            </div>
-          </div>
-        </div>
       </aside>
 
       {/* ── Main Content ─────────────────────────────── */}
@@ -285,6 +281,10 @@ export default function DashboardPage() {
 
           {activeView === 'farmacia-view' && (
             <FarmaciaView />
+          )}
+
+          {activeView === 'auditoria-view' && (
+            <AuditoriaView />
           )}
 
           {activeView === 'profile-view' && (

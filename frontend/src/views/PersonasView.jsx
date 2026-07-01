@@ -1,5 +1,8 @@
 import React, { useState, useMemo } from 'react';
+import toast from 'react-hot-toast';
 import { api } from '../services/api';
+import DetallesPersonaModal from '../components/DetallesPersonaModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const ROLE_COLORS = {
   'Administrador':       'badge-red',
@@ -23,6 +26,10 @@ export default function PersonasView({ loadingPersonas, filteredPersonas, resume
   const [nuevoRol, setNuevoRol]       = useState('');
   const [saving, setSaving]           = useState(false);
   const [msgRol, setMsgRol]           = useState('');
+  const [detallesModalId, setDetallesModalId] = useState(null);
+  const [deletePersona, setDeletePersona] = useState(null);
+  const [deleteStage, setDeleteStage] = useState(0); // 0: cerrado, 1: advertencia, 2: advertencia crítica
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const token = localStorage.getItem('token');
 
@@ -52,6 +59,30 @@ export default function PersonasView({ loadingPersonas, filteredPersonas, resume
       setMsgRol(err.message || 'Error al cambiar rol.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteStep1 = (persona) => {
+    setDeletePersona(persona);
+    setDeleteStage(1);
+  };
+
+  const executeDelete = async () => {
+    if (!deletePersona) return;
+    setIsDeleting(true);
+    try {
+      await api(`/persona/${deletePersona.id_persona}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(`La persona ${deletePersona.nombre} ha sido eliminada por completo del sistema.`);
+      setDeleteStage(0);
+      setDeletePersona(null);
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      toast.error(err.message || 'Error al eliminar a la persona. Si el error es "Token inválido", cierre sesión y vuelva a ingresar.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -161,13 +192,31 @@ export default function PersonasView({ loadingPersonas, filteredPersonas, resume
                       </td>
                       <td>{p.telefono || '—'}</td>
                       <td>
-                        <button
-                          className="btn-secondary"
-                          style={{ padding: '5px 12px', fontSize: '0.78rem', borderRadius: 7 }}
-                          onClick={() => abrirModal(p)}
-                        >
-                          {p.usuario ? 'Cambiar Rol' : 'Asignar Rol'}
-                        </button>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            className="btn-secondary"
+                            style={{ padding: '5px 10px', fontSize: '0.75rem', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 4 }}
+                            onClick={() => setDetallesModalId(p.id_persona)}
+                            title="Ver Expediente Completo"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                          </button>
+                          <button
+                            className="btn-secondary"
+                            style={{ padding: '5px 10px', fontSize: '0.75rem', borderRadius: 6 }}
+                            onClick={() => abrirModal(p)}
+                          >
+                            Rol
+                          </button>
+                          <button
+                            className="btn-secondary"
+                            style={{ padding: '5px 10px', fontSize: '0.75rem', borderRadius: 6, color: 'var(--red-600)', borderColor: 'rgba(220,38,38,0.2)', background: 'rgba(220,38,38,0.05)' }}
+                            onClick={() => handleDeleteStep1(p)}
+                            title="Eliminar del Sistema"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -256,6 +305,36 @@ export default function PersonasView({ loadingPersonas, filteredPersonas, resume
           </div>
         </>
       )}
+
+      {detallesModalId && (
+        <DetallesPersonaModal 
+          personaId={detallesModalId} 
+          onClose={() => setDetallesModalId(null)} 
+        />
+      )}
+
+      {/* Flujo de Eliminación de Persona */}
+      <ConfirmModal
+        isOpen={deleteStage === 1}
+        title="Confirmar Eliminación"
+        message={`Esta acción requiere privilegios de administrador.\n\n¿Está seguro que desea iniciar el proceso de eliminación para ${deletePersona?.nombre} ${deletePersona?.apellido} del sistema central?`}
+        confirmText="Continuar"
+        cancelText="Cancelar"
+        isDestructive={true}
+        onConfirm={() => setDeleteStage(2)}
+        onCancel={() => { setDeleteStage(0); setDeletePersona(null); }}
+      />
+      <ConfirmModal
+        isOpen={deleteStage === 2}
+        title="¡Advertencia Crítica!"
+        message={`Esta es una operación en cascada irreversible.\n\nSe eliminará de forma permanente:\n• Historial médico, diagnósticos y recetas.\n• Citas pasadas y futuras programadas.\n• Datos contractuales, laborales y cuenta de acceso.\n\n¿Desea proceder con la eliminación definitiva?`}
+        confirmText="Sí, Eliminar Permanentemente"
+        cancelText="Abortar Operación"
+        isDestructive={true}
+        isProcessing={isDeleting}
+        onConfirm={executeDelete}
+        onCancel={() => { if (!isDeleting) { setDeleteStage(0); setDeletePersona(null); } }}
+      />
     </div>
   );
 }

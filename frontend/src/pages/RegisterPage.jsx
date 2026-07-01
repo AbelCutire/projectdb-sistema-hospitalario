@@ -56,8 +56,8 @@ export default function RegisterPage() {
           <div className="auth-logo-icon"></div>
         </div>
 
-        <h2>Registro de Pacientes</h2>
-        <p className="auth-card-subtitle">Cree su cuenta para agendar citas y ver sus recetas</p>
+        <h2 style={{ color: '#0F172A', fontWeight: 800, letterSpacing: '-0.5px' }}>EsSalud<span style={{ color: '#2563EB' }}>+</span></h2>
+        <p className="auth-card-subtitle" style={{ color: '#64748B', fontSize: '0.95rem' }}>Registro de Nuevo Paciente</p>
 
         <form onSubmit={handleRequestRegister} className="auth-form" style={{ marginTop: 20 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>

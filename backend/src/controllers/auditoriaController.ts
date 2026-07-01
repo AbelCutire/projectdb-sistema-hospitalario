@@ -12,7 +12,7 @@ export const getAuditoria = async (req: Request, res: Response) => {
         }
       },
       orderBy: {
-        fecha: 'desc'
+        fecha_hora: 'desc'
       },
       take: 100 // Últimos 100 registros
     });

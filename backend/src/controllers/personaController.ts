@@ -157,7 +157,7 @@ export const updateRolPersona = async (req: Request, res: Response) => {
 
     // Registrar en auditoría
     const userId = (req as any).user?.id_usuario || null;
-    const { logAction } = await import('../utils/auditService');
+    const { logAction } = await import('../utils/auditService.js');
     await logAction(userId, 'ACTUALIZAR_ROL', 'usuario', `Se cambió el rol de persona ID: ${id_persona} a rol ID: ${id_rol}`);
 
     res.json(actualizado);
@@ -174,5 +174,142 @@ export const getRoles = async (req: Request, res: Response) => {
     res.json(roles);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener roles' });
+  }
+};
+
+// GET /persona/:id/detalles — Retorna absolutamente toda la información anidada de la persona
+export const getPersonaDetalles = async (req: Request, res: Response) => {
+  try {
+    const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const id = rawId ? parseInt(rawId, 10) : NaN;
+    if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
+
+    const persona = await prisma.persona.findUnique({
+      where: { id_persona: id },
+      include: {
+        usuario: { include: { rol: true } },
+        paciente: {
+          include: {
+            historial_clinico: true,
+            cita: { include: { doctor: { include: { especialidad: true, empleado: { include: { persona: true } } } }, consultorio: true }, orderBy: { fecha: 'desc' } },
+            diagnostico: { include: { tratamiento: { include: { receta: { include: { detalle_receta: { include: { farmacia: true } } } } } } }, orderBy: { fecha: 'desc' } },
+            ingreso_hospitalizacion: { include: { camilla: { include: { sala: true } } } },
+            pago: true
+          }
+        },
+        empleado: {
+          include: {
+            contrato: true,
+            doctor: { include: { especialidad: true, cita: { include: { paciente: { include: { persona: true } } } } } },
+            enfermera: { include: { turno: true } },
+            personal_administrativo: true,
+            personal_limpieza: { include: { turno: true } }
+          }
+        }
+      }
+    });
+
+    if (!persona) return res.status(404).json({ error: 'Persona no encontrada' });
+    res.json(persona);
+  } catch (error) {
+    console.error('Error al obtener detalles de la persona:', error);
+    res.status(500).json({ error: 'Error al obtener detalles de la persona' });
+  }
+};
+
+// DELETE /persona/:id — Eliminación en cascada manual de todos los datos
+export const deletePersona = async (req: Request, res: Response) => {
+  try {
+    const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const id = rawId ? parseInt(rawId, 10) : NaN;
+    if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
+
+    await prisma.$transaction(async (tx) => {
+      // Obtener el usuario asociado a esta persona (si existe)
+      const user = await tx.usuario.findUnique({ where: { id_persona: id } });
+
+      // 1. Si es paciente, borrar todo el rastro médico
+      const paciente = await tx.paciente.findUnique({ where: { id_persona: id } });
+      if (paciente) {
+        await tx.pago.deleteMany({ where: { id_paciente: id } });
+        
+        const diags = await tx.diagnostico.findMany({ where: { id_paciente: id } });
+        const diagIds = diags.map(d => d.id_diagnostico);
+        if (diagIds.length > 0) {
+          const trat = await tx.tratamiento.findMany({ where: { id_diagnostico: { in: diagIds } } });
+          const tratIds = trat.map(t => t.id_tratamiento);
+          if (tratIds.length > 0) {
+            const rec = await tx.receta.findMany({ where: { id_tratamiento: { in: tratIds } } });
+            const recIds = rec.map(r => r.id_receta);
+            if (recIds.length > 0) {
+              await tx.detalle_receta.deleteMany({ where: { id_receta: { in: recIds } } });
+              await tx.receta.deleteMany({ where: { id_tratamiento: { in: tratIds } } });
+            }
+            await tx.tratamiento.deleteMany({ where: { id_diagnostico: { in: diagIds } } });
+          }
+          await tx.diagnostico.deleteMany({ where: { id_paciente: id } });
+        }
+
+        await tx.cita.deleteMany({ where: { id_paciente: id } });
+        await tx.ingreso_hospitalizacion.deleteMany({ where: { id_paciente: id } });
+        await tx.solicitud_acceso.deleteMany({ where: { id_paciente: id } });
+        await tx.historial_clinico.deleteMany({ where: { id_paciente: id } });
+        await tx.paciente.delete({ where: { id_persona: id } });
+      }
+
+      // 2. Si es doctor/empleado, borrar rastros
+      const empleado = await tx.empleado.findUnique({ where: { id_persona: id } });
+      if (empleado) {
+        // Encontrar todas las citas de este doctor para borrar sus dependencias
+        const doctorCitas = await tx.cita.findMany({ where: { id_doctor: id } });
+        const citaIds = doctorCitas.map(c => c.id_cita);
+        
+        if (citaIds.length > 0) {
+          const diags = await tx.diagnostico.findMany({ where: { id_cita: { in: citaIds } } });
+          const diagIds = diags.map(d => d.id_diagnostico);
+          if (diagIds.length > 0) {
+            const trat = await tx.tratamiento.findMany({ where: { id_diagnostico: { in: diagIds } } });
+            const tratIds = trat.map(t => t.id_tratamiento);
+            if (tratIds.length > 0) {
+              const rec = await tx.receta.findMany({ where: { id_tratamiento: { in: tratIds } } });
+              const recIds = rec.map(r => r.id_receta);
+              if (recIds.length > 0) {
+                await tx.detalle_receta.deleteMany({ where: { id_receta: { in: recIds } } });
+                await tx.receta.deleteMany({ where: { id_tratamiento: { in: tratIds } } });
+              }
+              await tx.tratamiento.deleteMany({ where: { id_diagnostico: { in: diagIds } } });
+            }
+            await tx.diagnostico.deleteMany({ where: { id_cita: { in: citaIds } } });
+          }
+          await tx.cita.deleteMany({ where: { id_doctor: id } });
+        }
+
+        await tx.doctor.deleteMany({ where: { id_persona: id } });
+        await tx.enfermera.deleteMany({ where: { id_persona: id } });
+        await tx.personal_administrativo.deleteMany({ where: { id_persona: id } });
+        await tx.personal_limpieza.deleteMany({ where: { id_persona: id } });
+        await tx.contrato.deleteMany({ where: { id_empleado: id } });
+        await tx.empleado.delete({ where: { id_persona: id } });
+      }
+
+      // 3. Borrar rastro de usuario (y sus auditorías/solicitudes)
+      if (user) {
+        await tx.solicitud_acceso.deleteMany({ where: { OR: [{ id_doctor: user.id_usuario }, { id_admin: user.id_usuario }] } });
+        await tx.auditoria.deleteMany({ where: { id_usuario: user.id_usuario } });
+        await tx.usuario.delete({ where: { id_usuario: user.id_usuario } });
+      }
+
+      // 4. Finalmente, borrar la persona
+      await tx.persona.delete({ where: { id_persona: id } });
+    });
+
+    const userId = (req as any).user?.id_usuario || null;
+    const { logAction } = await import('../utils/auditService.js');
+    await logAction(userId, 'ELIMINAR_PERSONA', 'persona', `Se eliminó en cascada a la persona con ID: ${id} y todos sus registros (citas canceladas, datos borrados)`);
+
+    res.json({ message: 'Persona y todos sus datos eliminados correctamente' });
+  } catch (error) {
+    console.error('Error al eliminar persona:', error);
+    res.status(500).json({ error: 'Error al eliminar la persona en cascada' });
   }
 };

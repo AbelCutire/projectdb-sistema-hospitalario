@@ -85,7 +85,7 @@ export const createDiagnostico = async (req: Request, res: Response) => {
 
     // Registrar en auditoría
     const userId = (req as any).user?.id_usuario || null;
-    const { logAction } = await import('../utils/auditService');
+    const { logAction } = await import('../utils/auditService.js');
     await logAction(userId, 'CREAR_DIAGNOSTICO', 'diagnostico', `Se creó el diagnóstico ID: ${nuevoDiagnostico.id_diagnostico}`);
 
     res.status(201).json(nuevoDiagnostico);

@@ -7,13 +7,14 @@ export const logAction = async (
   detalles: string | null = null
 ) => {
   try {
+    if (!id_usuario) return; // Auditoria requiere un usuario en la BD
+
     await prisma.auditoria.create({
       data: {
-        id_usuario: id_usuario || null,
-        accion,
-        tabla_afectada,
-        detalles,
-        fecha: new Date()
+        id_usuario: id_usuario,
+        accion_realizada: accion,
+        tabla_afectada: tabla_afectada || 'General',
+        descripcion_cambio: detalles
       }
     });
   } catch (error) {

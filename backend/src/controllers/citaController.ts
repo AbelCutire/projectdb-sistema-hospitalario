@@ -144,7 +144,7 @@ export const cancelarCita = async (req: Request, res: Response) => {
     });
 
     // Registrar en auditoría
-    const { logAction } = await import('../utils/auditService');
+    const { logAction } = await import('../utils/auditService.js');
     await logAction(userId, 'CANCELAR_CITA', 'cita', `Se canceló la cita ID: ${id}`);
 
     res.json(citaCancelada);

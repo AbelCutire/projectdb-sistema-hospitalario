@@ -1,6 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import prisma from './config/database';
 import pacienteRoutes      from './routes/pacienteRoutes';
 import doctorRoutes        from './routes/doctorRoutes';
@@ -21,8 +23,6 @@ import auditoriaRoutes     from './routes/auditoriaRoutes';
 import { runSeeder }       from './utils/seeder';
 import { authMiddleware }  from './middlewares/authMiddleware';
 import { roleMiddleware }  from './middlewares/roleMiddleware';
-
-dotenv.config();
 
 runSeeder();
 

@@ -84,8 +84,8 @@ export default function LoginPage() {
 
         {viewMode === 'login' && (
           <>
-            <h2>MedicDB</h2>
-            <p className="auth-card-subtitle">Ingrese sus credenciales para continuar</p>
+            <h2 style={{ color: '#0F172A', fontWeight: 800, letterSpacing: '-0.5px' }}>EsSalud<span style={{ color: '#2563EB' }}>+</span></h2>
+            <p className="auth-card-subtitle" style={{ color: '#64748B', fontSize: '0.95rem' }}>Plataforma Hospitalaria Integral</p>
 
             <form onSubmit={handleLogin} className="auth-form">
               <label>
