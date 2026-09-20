@@ -1,0 +1,30 @@
+# ttree.control — Control file for the ttree PostgreSQL extension
+#
+# Proyecto Académico: Bases de Datos II
+# Versión objetivo: PostgreSQL 18.x
+#
+# Referencia: https://www.postgresql.org/docs/18/extend-extensions.html
+# Formato: clave = valor (sin comillas en los strings)
+
+# Nombre de la extensión (debe coincidir con el nombre del archivo .control)
+comment = 'T-Tree Index Access Method — Bases de Datos II'
+
+# Versión predeterminada que se instala con CREATE EXTENSION ttree
+default_version = '1.0'
+
+# Módulo C que implementa las funciones (ttree_am.c compilado → ttree_am.so)
+module_pathname = '$libdir/ttree_am'
+
+# La extensión puede ser creada/eliminada por superusuarios o usuarios con
+# el privilegio CREATE en la base de datos
+# superuser = false  # cambiar a false si se quiere acceso amplio
+
+# ¿Relocatable? No, porque registramos tipos y access methods en catálogos.
+relocatable = false
+
+# ¿La extensión es confiable (trusted)? No requiere superusuario para instalar.
+# En PG13+ esto permite que usuarios normales instalen extensiones confiables.
+# trusted = false
+
+# Codificación del archivo de script SQL
+encoding = UTF8
