@@ -1,6 +1,3 @@
-/*
- * test_ttree.c — Suite de pruebas automáticas del T-Tree
- */
 
 #include "../src/ttree.h"
 
@@ -10,9 +7,7 @@
 #include <stdbool.h>
 #include <time.h>
 
-/* =========================================================================
- * FRAMEWORK PRUEBAS MÍNIMO
- * ========================================================================= */
+
 
 static int tests_run    = 0;
 static int tests_passed = 0;
