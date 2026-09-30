@@ -1,13 +1,5 @@
 /*
  * test_ttree.c — Suite de pruebas automáticas del T-Tree
- *
- * Proyecto Académico: Bases de Datos II
- *
- * Compilar y ejecutar:
- *   make test
- *
- * Cada prueba imprime PASS o FAIL.
- * Al final se muestra un resumen total.
  */
 
 #include "../src/ttree.h"
@@ -19,7 +11,7 @@
 #include <time.h>
 
 /* =========================================================================
- * FRAMEWORK DE PRUEBAS MÍNIMO
+ * FRAMEWORK PRUEBAS MÍNIMO
  * ========================================================================= */
 
 static int tests_run    = 0;
@@ -67,7 +59,7 @@ static int tests_failed = 0;
     } while (0)
 
 /* =========================================================================
- * COMPARADOR PARA qsort
+ * COMPARADOR PARA QSORT
  * ========================================================================= */
 
 static int cmp_i64(const void *a, const void *b)
@@ -78,7 +70,7 @@ static int cmp_i64(const void *a, const void *b)
 }
 
 /* =========================================================================
- * PRUEBA 1 — Árbol vacío
+ * PRUEBA 1 - ARBOL VACIO
  * ========================================================================= */
 static void test1_empty_tree(void)
 {
@@ -112,7 +104,7 @@ cleanup:
 }
 
 /* =========================================================================
- * PRUEBA 2 — Inserción básica
+ * PRUEBA 2 - INSERCION
  * ========================================================================= */
 static void test2_basic_insert(void)
 {
@@ -148,7 +140,7 @@ cleanup:
 }
 
 /* =========================================================================
- * PRUEBA 3 — Búsqueda exitosa
+ * PRUEBA 3 - BUSQUEDA
  * ========================================================================= */
 static void test3_search_found(void)
 {
@@ -195,7 +187,7 @@ cleanup:
 }
 
 /* =========================================================================
- * PRUEBA 4 — Búsqueda fallida
+ * PRUEBA 4 - BUSQUEDA FALLIDA
  * ========================================================================= */
 static void test4_search_not_found(void)
 {
@@ -225,7 +217,7 @@ cleanup:
 }
 
 /* =========================================================================
- * PRUEBA 5 — Duplicados rechazados
+ * PRUEBA 5 - DUPLICADOS
  * ========================================================================= */
 static void test5_duplicates(void)
 {
@@ -266,7 +258,7 @@ cleanup:
 }
 
 /* =========================================================================
- * PRUEBA 6 — Inserciones desordenadas
+ * PRUEBA 6 - INSERCIONES DESORDENADAS
  * ========================================================================= */
 static void test6_random_order(void)
 {
@@ -317,7 +309,7 @@ cleanup:
 }
 
 /* =========================================================================
- * PRUEBA 7 — Búsqueda por rango
+ * PRUEBA 7 - BUSQUEDA POR RANFO
  * ========================================================================= */
 static void test7_range_search(void)
 {
@@ -375,7 +367,7 @@ cleanup:
 }
 
 /* =========================================================================
- * PRUEBA 8 — Caso secuencial ascendente (1..1000)
+ * PRUEBA 8 - CASO SECUANCIAL (1..1000)
  * ========================================================================= */
 static void test8_sequential_asc(void)
 {
@@ -414,7 +406,7 @@ cleanup:
 }
 
 /* =========================================================================
- * PRUEBA 9 — Caso secuencial descendente (1000..1)
+ * PRUEBA 9 - CASO SECUENCIAL DESCENDENTE (1000..1)
  * ========================================================================= */
 static void test9_sequential_desc(void)
 {
@@ -453,7 +445,7 @@ cleanup:
 }
 
 /* =========================================================================
- * PRUEBA 10 — Memoria: crear y destruir múltiples árboles
+ * PRUEBA 10 - MEMORIA
  * ========================================================================= */
 static void test10_memory(void)
 {
@@ -497,7 +489,7 @@ cleanup:
 }
 
 /* =========================================================================
- * PRUEBA EXTRA — Verificación de impresión (visual)
+ * PRUEBA EXTRA - IMPRESION
  * ========================================================================= */
 static void test_extra_print(void)
 {
