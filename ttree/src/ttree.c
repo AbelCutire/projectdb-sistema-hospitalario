@@ -1,26 +1,7 @@
 /*
- * ttree.c — Implementación del T-Tree
- *
- * Proyecto Académico: Bases de Datos II — Indexación y Distribución en PostgreSQL
- *
- * TEORÍA:
- * Un T-Tree es un árbol binario de búsqueda balanceado (AVL) donde cada nodo
- * contiene un ARREGLO ORDENADO de claves (entre TTREE_NODE_MIN y TTREE_NODE_MAX).
- *
- * Invariante BST del T-Tree:
- *   max(subárbol_izq)  <  N.keys[0]  ≤  N.keys[count-1]  <  min(subárbol_der)
- *
- * Tipos de nodos:
- *   - Hoja:    sin hijos
- *   - Semihoja: exactamente un hijo
- *   - Interno: dos hijos
- *
- * Referencia:
- *   Lehman & Carey (1986). "A Study of Index Structures for Main Memory DBMS".
- *   VLDB 1986, pp. 294-303.
- *
+
  * -------------------------------------------------------------------------
- * ALGORITMO DE INSERCIÓN (Lehman & Carey, simplificado):
+ * ALGORITMO DE INSERCIÓN 
  * -------------------------------------------------------------------------
  *
  * 1. Si el árbol está vacío → crear nodo raíz.
