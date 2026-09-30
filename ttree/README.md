@@ -234,14 +234,14 @@ PostgreSQL (CREATE INDEX USING ttree)
        ▼
 ttree_handler()           ← devuelve IndexAmRoutine con punteros a funciones
        │
-  ┌────┴──────────────────────────┐
-  │     IndexAmRoutine            │
-  │  ambuild   → ttree_build_index│
-  │  aminsert  → ttree_insert     │
-  │  ambeginscan→ ttree_beginscan │
-  │  amgettuple→ ttree_gettuple   │
-  │  amendscan → ttree_endscan    │
-  └────┬──────────────────────────┘
+┌──────┴────────────────────────────┐
+│         IndexAmRoutine            │
+│  ambuild     → ttree_build_index  │
+│  aminsert    → ttree_insert       │
+│  ambeginscan → ttree_beginscan    │
+│  amgettuple  → ttree_gettuple     │
+│  amendscan   → ttree_endscan      │
+└──────┬────────────────────────────┘
        │
        ▼
   ttree.c (núcleo independiente)
