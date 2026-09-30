@@ -1,18 +1,11 @@
 #!/usr/bin/env bash
-# scripts/build_and_test.sh
-# Script de construcción y prueba del T-Tree
-# Uso: bash scripts/build_and_test.sh [--debug]
-#
-# Proyecto Académico: Bases de Datos II
-#
-# Este script:
 #   1. Verifica que gcc esté disponible
 #   2. Compila el núcleo del T-Tree
 #   3. Compila y ejecuta las pruebas
 #   4. Opcionalmente ejecuta con AddressSanitizer
 #   5. Muestra un resumen final
 
-set -e  # salir en el primer error
+set -e  # error 
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TTREE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
