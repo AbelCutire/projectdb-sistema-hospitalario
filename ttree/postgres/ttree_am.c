@@ -1,62 +1,4 @@
-/*
- * ttree_am.c — Módulo de integración del T-Tree con PostgreSQL 18
- *
- * Proyecto Académico: Bases de Datos II — Indexación y Distribución en PostgreSQL
- *
- * Este archivo implementa un Index Access Method (IAM) que permite usar
- * el T-Tree como índice dentro de PostgreSQL.
- *
- * Arquitectura en capas:
- *
- *     PostgreSQL (SQL: CREATE INDEX USING ttree)
- *          │
- *          ▼
- *     ttree_am.c   ← este archivo (adaptador PG ↔ T-Tree)
- *          │
- *          ▼
- *     ttree.c      ← núcleo del T-Tree independiente de PostgreSQL
- *
- * -------------------------------------------------------------------------
- * VERSIÓN DE POSTGRESQL
- * -------------------------------------------------------------------------
- * Objetivo: PostgreSQL 18.x
- *
- * Cambios relevantes de PG17/18 vs versiones anteriores:
- *
- * 1. aminsert: en PG17 se agregó el parámetro 'indexUnchanged' (bool).
- *    PG18 mantiene esta firma. Las implementaciones para PG16 o anteriores
- *    NO son compatibles directamente.
- *    Fuente: src/include/access/amapi.h commit en PG17 desarrollo.
- *
- * 2. ambuild: devuelve IndexBuildResult* (sin cambios desde PG11+).
- *
- * 3. amgetbitmap: firma cambia en PG17 para usar int64 como retorno.
- *    Fuente: src/include/access/amapi.h PG17+.
- *
- * 4. amvalidate: se espera Oid (sin cambios).
- *
- * 5. amoptions: bytea* (sin cambios desde PG9.6+).
- *
- * -------------------------------------------------------------------------
- * ESTRATEGIA DE ALMACENAMIENTO
- * -------------------------------------------------------------------------
- * Para la integración con PostgreSQL, el T-Tree se almacena en páginas
- * de heap del índice usando la API de páginas de PostgreSQL (bufmgr).
- *
- * En esta primera versión (fase académica), el T-Tree se mantiene
- * EN MEMORIA durante el ciclo de vida del scan. Una implementación
- * productiva requeriría serialización en páginas de disco.
- *
- * Esta decisión de diseño está documentada en README.md sección "Limitaciones".
- *
- * -------------------------------------------------------------------------
- * COMPILACIÓN
- * -------------------------------------------------------------------------
- * Requiere PostgreSQL dev headers:
- *   apt-get install postgresql-server-dev-18
- *
- * Usar el Makefile en ttree/Makefile (target pg-extension).
- */
+
 
 #define BUILDING_TTREE_PG
 #include "ttree_am.h"
@@ -65,13 +7,7 @@
 /* Macro obligatoria para módulos de PostgreSQL */
 PG_MODULE_MAGIC;
 
-/* =========================================================================
- * ESTADO DEL SCAN
- * =========================================================================
- *
- * Guardamos el T-Tree en memoria durante el scan. En una implementación
- * productiva esto se haría con un cursor persistente en páginas del buffer.
- */
+
 typedef struct TTreeScanState {
     TTree    *tree;          /* árbol cargado en memoria para este scan */
     TTreeKey *results;       /* buffer de resultados del rango              */
@@ -83,28 +19,15 @@ typedef struct TTreeScanState {
 
 #define MAX_SCAN_RESULTS  1000000  /* límite práctico para fase académica */
 
-/* =========================================================================
- * HANDLER — Registra el access method con PostgreSQL
- * =========================================================================
- *
- * PostgreSQL llama a esta función cuando encuentra:
- *   CREATE INDEX ... USING ttree ...
- *
- * La función debe devolver un IndexAmRoutine poblado con punteros a
- * todas las funciones del access method.
- *
- * Tipo de retorno: Datum (puntero a IndexAmRoutine)
- */
+
 Datum
 ttree_handler(PG_FUNCTION_ARGS)
 {
     IndexAmRoutine *amroutine = makeNode(IndexAmRoutine);
 
-    /* ---------------------------------------------------------------
-     * Capacidades del access method
-     * --------------------------------------------------------------- */
-    amroutine->amstrategies      = 5;    /* =, <, <=, >, >= */
-    amroutine->amsupport         = 1;    /* función de comparación */
+
+    amroutine->amstrategies      = 5;    
+    amroutine->amsupport         = 1;    
     amroutine->amoptsprocnum     = 0;
     amroutine->amcanorder        = true;
     amroutine->amcanorderbyop    = false;
@@ -121,64 +44,46 @@ ttree_handler(PG_FUNCTION_ARGS)
     amroutine->amcaninclude      = false;
     amroutine->amusemaintenanceworkmem = false;
     amroutine->amparallelvacuumoptions = 0;
-    amroutine->amkeytype         = INT8OID;  /* clave int64 */
+    amroutine->amkeytype         = INT8OID; 
 
-    /* ---------------------------------------------------------------
-     * Funciones del access method
-     * --------------------------------------------------------------- */
+
 
     /* Construcción */
     amroutine->ambuild           = ttree_build_index;
     amroutine->ambuildempty      = ttree_buildempty;
 
-    /* DML */
-    amroutine->aminsert          = ttree_insert;
-    amroutine->aminsertcleanup   = NULL;    /* no requerido en PG18 básico */
 
-    /* Scans */
+    amroutine->aminsert          = ttree_insert;
+    amroutine->aminsertcleanup   = NULL;   
+
+
     amroutine->ambeginscan       = ttree_beginscan;
     amroutine->amrescan          = ttree_rescan;
     amroutine->amgettuple        = ttree_gettuple;
     amroutine->amgetbitmap       = ttree_getbitmap;
     amroutine->amendscan         = ttree_endscan;
 
-    /* Mantenimiento */
-    amroutine->ambulkdelete      = NULL;   /* simplificado: sin delete por ahora */
+
+    amroutine->ambulkdelete      = NULL;   
     amroutine->amvacuumcleanup   = NULL;
     amroutine->amcanreturn       = NULL;
 
-    /* Planificador */
+
     amroutine->amcostestimate    = ttree_costestimate;
 
-    /* Opciones */
+
     amroutine->amoptions         = ttree_options;
 
-    /* Validación de opclass */
+
     amroutine->amvalidate        = ttree_validate_am;
     amroutine->amadjustmembers   = NULL;
 
     PG_RETURN_POINTER(amroutine);
 }
 
-/* =========================================================================
- * CONSTRUCCIÓN DEL ÍNDICE — ambuild
- * =========================================================================
- *
- * PostgreSQL llama a esta función al ejecutar:
- *   CREATE INDEX ... USING ttree ...
- *
- * Debe iterar sobre la tabla y construir el índice.
- * En esta versión académica, construimos el T-Tree en memoria.
- *
- * Parámetros (PG18 amapi.h):
- *   heap      — relación de tabla base
- *   index     — relación de índice (donde guardamos datos)
- *   indexInfo — metadatos del índice
- */
 
-/*
- * Contexto para el callback de heap_index_build_scan
- */
+/* CONSTRUCCIÓN DEL ÍNDICE — ambuild*/
+
 typedef struct TTreeBuildState {
     TTree              *tree;
     double              heap_tuples;
@@ -187,7 +92,7 @@ typedef struct TTreeBuildState {
 } TTreeBuildState;
 
 /*
- * Callback llamado por table_index_build_scan por cada tupla de la tabla
+ * Callback 
  */
 static void
 ttree_build_callback(Relation index,
@@ -231,16 +136,10 @@ ttree_build_index(Relation heap,
                            &bstate,
                            NULL);  /* scan */
 
-    /*
-     * NOTA: en una implementación productiva, aquí se serializaría
-     * el árbol a páginas del buffer del índice. Por ahora, el árbol
-     * se almacena en el RelationData como datos opacos.
-     * Esta es una limitación conocida de la fase académica.
-     */
     elog(NOTICE, "ttree: índice construido con %zu claves (altura=%d)",
          ttree_size(bstate.tree), ttree_height(bstate.tree));
 
-    /* El árbol se libera aquí — en producción se persistiría */
+    /* El árbol se liberaa */
     ttree_destroy(bstate.tree);
 
     result = (IndexBuildResult *)palloc(sizeof(IndexBuildResult));
@@ -250,9 +149,7 @@ ttree_build_index(Relation heap,
     return result;
 }
 
-/*
- * ttree_buildempty — Crear índice vacío (para tablas nuevas sin datos)
- */
+
 void
 ttree_buildempty(Relation index)
 {
@@ -260,20 +157,7 @@ ttree_buildempty(Relation index)
     (void)index;
 }
 
-/* =========================================================================
- * INSERCIÓN — aminsert
- * =========================================================================
- *
- * Firma PG17/PG18 (con 'indexUnchanged' como parámetro adicional vs PG16):
- *
- *   bool aminsert(Relation index, Datum *values, bool *isnull,
- *                 ItemPointer heap_tid, Relation heap,
- *                 IndexUniqueCheck checkUnique,
- *                 bool indexUnchanged,         ← nuevo en PG17
- *                 IndexInfo *indexInfo)
- *
- * Fuente: src/include/access/amapi.h PG17+
- */
+
 bool
 ttree_insert(Relation            index,
              Datum              *values,
@@ -284,10 +168,7 @@ ttree_insert(Relation            index,
              bool                indexUnchanged,
              IndexInfo          *indexInfo)
 {
-    /*
-     * Ignorar NULLs — el T-Tree no indexa valores NULL.
-     * Esto es coherente con la naturaleza del árbol (claves comparables).
-     */
+   
     if (isnull[0])
         return false;
 
@@ -299,29 +180,13 @@ ttree_insert(Relation            index,
 
     int64_t key = DatumGetInt64(values[0]);
 
-    /*
-     * NOTA ACADÉMICA:
-     * En una implementación productiva, aquí se obtendría la página raíz
-     * del índice del buffer, se deserializaría el T-Tree, se insertaría
-     * la clave con su TID asociado, y se guardaría de vuelta.
-     *
-     * En esta fase, solo registramos la operación.
-     */
+    
     elog(DEBUG1, "ttree_insert: key=%" PRId64, (int64_t)key);
 
     return false;  /* false = no hay conflicto de unicidad */
 }
 
-/* =========================================================================
- * SCAN — ambeginscan / amrescan / amgettuple / amgetbitmap / amendscan
- * ========================================================================= */
 
-/*
- * ttree_beginscan — Inicia un scan del índice
- *
- * Firma PG18 (amapi.h):
- *   IndexScanDesc ambeginscan(Relation indexRelation, int nkeys, int norderbys)
- */
 IndexScanDesc
 ttree_beginscan(Relation index, int nkeys, int norderbys)
 {
@@ -343,13 +208,7 @@ ttree_beginscan(Relation index, int nkeys, int norderbys)
     return scan;
 }
 
-/*
- * ttree_rescan — Reconfigura las condiciones del scan
- *
- * Firma PG18:
- *   void amrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
- *                 ScanKey orderbys, int norderbys)
- */
+
 void
 ttree_rescan(IndexScanDesc scan,
              ScanKey       scankey,
@@ -366,15 +225,7 @@ ttree_rescan(IndexScanDesc scan,
     if (scankey && nscankeys > 0)
         memmove(scan->keyData, scankey, sizeof(ScanKeyData) * nscankeys);
 
-    /*
-     * Interpretar las condiciones de scan para determinar el rango.
-     * Estrategias estándar para int8:
-     *   BTLessStrategyNumber    (1) → <
-     *   BTLessEqualStrategyNumber(2) → <=
-     *   BTEqualStrategyNumber   (3) → =
-     *   BTGreaterEqualStrategyNumber(4) → >=
-     *   BTGreaterStrategyNumber (5) → >
-     */
+   
     state->scan_lower = INT64_MIN;
     state->scan_upper = INT64_MAX;
 
@@ -409,14 +260,7 @@ ttree_rescan(IndexScanDesc scan,
     state->result_pos   = 0;
 }
 
-/*
- * ttree_gettuple — Devuelve la siguiente tupla del scan
- *
- * Firma PG18:
- *   bool amgettuple(IndexScanDesc scan, ScanDirection direction)
- *
- * Devuelve true si se encontró una tupla, false si no hay más.
- */
+
 bool
 ttree_gettuple(IndexScanDesc scan, ScanDirection direction)
 {
@@ -425,10 +269,7 @@ ttree_gettuple(IndexScanDesc scan, ScanDirection direction)
     /* Primera llamada: ejecutar la búsqueda por rango */
     if (state->result_pos == 0 && state->result_count == 0) {
         if (!state->tree) {
-            /*
-             * NOTA ACADÉMICA: aquí se cargaría el T-Tree desde las páginas
-             * del buffer del índice. Para la fase de prueba retornamos false.
-             */
+            
             return false;
         }
 
@@ -458,12 +299,7 @@ ttree_gettuple(IndexScanDesc scan, ScanDirection direction)
     }
 }
 
-/*
- * ttree_getbitmap — Devuelve un bitmap de TIDs
- *
- * Firma PG17/PG18 (retorno int64 desde PG17, era int64 antes también):
- *   int64 amgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
- */
+
 int64
 ttree_getbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 {
@@ -473,13 +309,11 @@ ttree_getbitmap(IndexScanDesc scan, TIDBitmap *tbm)
     if (!state->tree)
         return 0;
 
-    /* En implementación completa: ejecutar rango e insertar TIDs en tbm */
+    
     return 0;
 }
 
-/*
- * ttree_endscan — Finalizar scan y liberar recursos
- */
+
 void
 ttree_endscan(IndexScanDesc scan)
 {
@@ -493,10 +327,6 @@ ttree_endscan(IndexScanDesc scan)
     scan->opaque = NULL;
 }
 
-/* =========================================================================
- * ESTIMACIÓN DE COSTOS — amcostestimate
- * ========================================================================= */
-
 void
 ttree_costestimate(PlannerInfo *root,
                    IndexPath   *path,
@@ -507,12 +337,7 @@ ttree_costestimate(PlannerInfo *root,
                    double      *indexCorrelation,
                    double      *indexPages)
 {
-    /*
-     * Estimación simplificada para el planificador.
-     * En producción, usar estadísticas reales de la relación.
-     *
-     * Costo del T-Tree: O(log n) para búsqueda, O(log n + m) para rango.
-     */
+    
     (void)root;
     (void)path;
     (void)loop_count;
@@ -524,31 +349,18 @@ ttree_costestimate(PlannerInfo *root,
     *indexPages        = 1.0;
 }
 
-/* =========================================================================
- * OPCIONES — amoptions
- * ========================================================================= */
-
 bytea *
 ttree_options(Datum reloptions, bool validate)
 {
     (void)reloptions;
     (void)validate;
-    /* Sin opciones adicionales en esta versión */
     return NULL;
 }
-
-/* =========================================================================
- * VALIDACIÓN DE OPCLASS — amvalidate
- * ========================================================================= */
 
 bool
 ttree_validate_am(Oid opclassoid)
 {
-    /*
-     * Validar que la operator class sea compatible.
-     * Por ahora aceptamos cualquier opclass — en producción verificar
-     * que tenga la función de comparación registrada.
-     */
+    
     (void)opclassoid;
     return true;
 }
