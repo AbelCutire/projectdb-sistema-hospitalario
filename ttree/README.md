@@ -27,7 +27,7 @@ Esto permite comparar el rendimiento del T-Tree contra el B-Tree estándar de Po
 ┌────────────────────────────────────────────────────┐
 │  TTreeNode                                         │
 │                                                    │
-│  keys[]:  [ k0 | k1 | k2 | ... | k_{MAX-1} ]     │ ← arreglo ordenado
+│  keys[]:  [ k0 | k1 | k2 | ... | k_{MAX-1} ]       │ ← arreglo ordenado
 │  count:   número actual de claves (1..MAX)         │
 │  height:  altura del subárbol enraizado aquí       │
 │  *left:   puntero al hijo izquierdo                │
