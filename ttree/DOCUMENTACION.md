@@ -1,7 +1,3 @@
-# Documentación Breve del T-Tree
-
-Este proyecto implementa un **T-Tree** didáctico en C11. El código se divide en tres archivos principales, aislando la lógica del árbol de las pruebas y el proceso de compilación.
-
 ## Archivos del Proyecto
 
 1. **`ttree.h`**: Define las estructuras base (`Entry`, `TNode`, `TTree`) y la API pública.
@@ -9,9 +5,7 @@ Este proyecto implementa un **T-Tree** didáctico en C11. El código se divide e
 3. **`main.c`**: Contiene 5 pruebas automáticas que validan la funcionalidad del árbol usando `assert()`.
 4. **`build.ps1`**: Script generado por IA (Gemini) para compilar y ejecutar todo rápidamente en Windows sin necesidad de Docker.
 
----
-
-## Funciones Internas (Privadas en `ttree.c`)
+## Funciones Internas .c
 
 - `node_new()`: Crea una nueva hoja vacía y maneja la asignación de memoria.
 - `node_height()`, `update_height()`: Mantienen actualizada la altura de cada nodo (necesario para el balanceo AVL).
@@ -24,9 +18,8 @@ Este proyecto implementa un **T-Tree** didáctico en C11. El código se divide e
 - `insert_node()`: Función recursiva principal. Decide si la clave baja por la izquierda, derecha, o si debe "dividir/desplazar" el nodo actual.
 - `range_node()`: Recorre el árbol podando ramas que están fuera de los límites superior o inferior de la búsqueda.
 
----
 
-## Funciones Públicas (La API)
+## Funciones Públicas
 
 - `ttree_init()`: Inicializa el contenedor del árbol.
 - `ttree_build()`: Permite construir el árbol de forma masiva a partir de un arreglo de pares `(key, rowid)`.
@@ -36,12 +29,10 @@ Este proyecto implementa un **T-Tree** didáctico en C11. El código se divide e
 - `ttree_print()`: Imprime el árbol de dos formas: en orden (como lista plana) y de forma estructurada (para ver los niveles y balances).
 - `ttree_destroy()`: Libera toda la memoria usando un recorrido postorden.
 
----
+## pruebas main.c
 
-## Pruebas (`main.c`)
-
-- **Test 1**: Inserción secuencial (fuerza al árbol a aplicar rotaciones AVL constantemente).
+- **Test 1**: Inserción secuencial ,peor caso sin avl,f uerza al árbol a aplicar rotaciones AVL constantemente.
 - **Test 2**: Inserción aleatoria.
-- **Test 3**: Búsqueda exacta (claves que existen y que no existen).
+- **Test 3**: Búsqueda exacta de claves
 - **Test 4**: Búsqueda por rango.
-- **Test 5 (Verificación Automática)**: Recorre el árbol completo asegurando mediante aserciones matemáticas que el orden de las claves es estricto y el balance AVL se respetó en cada nodo.
+- **Test 5 (assert())**: Recorre el árbol completo asegurando mediante aserciones matemáticas que el orden de las claves es estricto y el balance AVL se respetó en cada nodo.
