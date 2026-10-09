@@ -1,13 +1,18 @@
-# Proyecto BDII - Indexación (Etapa I)
+## Instrucciones de ejecución (Multiplataforma)
 
-## Instrucciones de ejecución
-1. Clonar el repositorio.
-2. En la raíz del proyecto, levantar el entorno: `sudo docker-compose up -d`
-3. Entrar al contenedor como administrador: `sudo docker exec -it --user root bd-parcial bash`
-4. Compilar la extensión (la carpeta ya está vinculada): `cd /tmp/extension && make && make install`
-5. Probar en PostgreSQL:
-   `su - postgres -c "psql"`
-   `CREATE EXTENSION t_tree;`
+1. Levantar el entorno de base de datos:
+   `docker-compose up -d`
+2. Instalar las dependencias del proyecto:
+   `npm install`
+3. Ingresar al contenedor y compilar la extensión en C:
+   `sudo docker exec -it --user root bd-parcial bash`
+   `cd /tmp/extension && make && make install`
+   `exit`
+4. Construir las tablas en PostgreSQL local:
+   `npx prisma migrate dev`
+5. Ejecutar la automatización de datos y pruebas (Prisma Seed + Benchmark SQL):
+6. `cd backend`
+   `sudo npm run benchmark`
 
 ## Detener el contenedor activo
 1. sudo docker stop bd-parcial
