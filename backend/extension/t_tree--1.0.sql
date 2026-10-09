@@ -1,4 +1,14 @@
-CREATE OR REPLACE FUNCTION ttree_test()
+CREATE OR REPLACE FUNCTION ttree_insertar(integer)
 RETURNS boolean
-AS 'MODULE_PATHNAME', 'ttree_test'
+AS 'MODULE_PATHNAME', 'ttree_insertar'
+LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION ttree_buscar(integer)
+RETURNS boolean
+AS 'MODULE_PATHNAME', 'ttree_buscar'
+LANGUAGE C STRICT;
+
+CREATE OR REPLACE FUNCTION ttree_limpiar()
+RETURNS void
+AS 'MODULE_PATHNAME', 'ttree_limpiar'
 LANGUAGE C STRICT;
