@@ -18,7 +18,22 @@
 #include <stdbool.h>
 #include <time.h>
 #include <string.h>
-#include <io.h>       /* _dup, _dup2, _close (Windows) */
+
+#ifdef _WIN32
+  #include <io.h>       /* _dup, _dup2, _close (Windows) */
+  #define DUP(fd)       _dup(fd)
+  #define DUP2(fd1,fd2) _dup2(fd1,fd2)
+  #define CLOSE(fd)     _close(fd)
+  #define FILENO(f)     _fileno(f)
+  #define DEVNULL       "NUL"
+#else
+  #include <unistd.h>   /* dup, dup2, close (Linux/Mac) */
+  #define DUP(fd)       dup(fd)
+  #define DUP2(fd1,fd2) dup2(fd1,fd2)
+  #define CLOSE(fd)     close(fd)
+  #define FILENO(f)     fileno(f)
+  #define DEVNULL       "/dev/null"
+#endif
 
 #include "../ttree/ttree.h"
 #include "../btree/src/btree.h"
@@ -150,21 +165,21 @@ static void run_benchmark(int N)
     /* Buffer para resultados del B-Tree */
     BTreeKey *res_buffer = (BTreeKey *)malloc((size_t)(range_width * 2) * sizeof(BTreeKey));
 
-    /* T-Tree: silenciamos stdout con _dup/_dup2 (Windows) para que
-     * ttree_range_search no imprima miles de lineas en pantalla */
+    /* T-Tree: silenciamos stdout para que ttree_range_search
+     * no imprima miles de lineas en pantalla */
     t0 = get_time_sec();
     fflush(stdout);
-    int saved_stdout = _dup(1);          /* guardar fd 1 (stdout) */
-    FILE *fnul = fopen("NUL", "w");
-    _dup2(_fileno(fnul), 1);             /* redirigir stdout a NUL */
+    int saved_stdout = DUP(1);
+    FILE *fnul = fopen(DEVNULL, "w");
+    DUP2(FILENO(fnul), 1);
     for (int q = 0; q < range_queries; q++) {
         int low = (rand() % (N > range_width ? (N - range_width) : 1)) * 2;
         int high = low + range_width;
         ttree_range_search(&ttree, low, high);
     }
     fflush(stdout);
-    _dup2(saved_stdout, 1);              /* restaurar stdout original */
-    _close(saved_stdout);
+    DUP2(saved_stdout, 1);
+    CLOSE(saved_stdout);
     fclose(fnul);
     t1 = get_time_sec();
     double ttree_range_time = t1 - t0;
