@@ -1,0 +1,4 @@
+CREATE OR REPLACE FUNCTION ttree_test()
+RETURNS boolean
+AS 'MODULE_PATHNAME', 'ttree_test'
+LANGUAGE C STRICT;

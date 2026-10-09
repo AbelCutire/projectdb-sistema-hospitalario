@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  db-parcial:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile
+    container_name: bd-parcial
+    environment:
+      - POSTGRES_PASSWORD=admin
+    ports:
+      - "5432:5432"
+    volumes:
+      # Monta la carpeta extension desde el backend hacia el contenedor
+      - ./backend/extension:/tmp/extension
