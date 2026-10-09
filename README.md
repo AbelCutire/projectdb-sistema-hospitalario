@@ -59,3 +59,134 @@ projectdb-sistema-hospitalario/
 ├── benchmark/                # Pruebas comparativas de rendimiento en C
 ├── Docker/                   # Entorno de contenedorización y extensiones C
 └── docker-compose.yml        # Orquestación del servicio PostgreSQL local
+```
+
+## Tecnologías Utilizadas
+
+* **Frontend:** React, Vite, Tailwind CSS / Vanilla CSS, Axios, Lucide Icons.
+* **Backend:** Node.js, Express, TypeScript, Prisma ORM, JWT, Bcrypt.
+* **Base de Datos:** PostgreSQL 16 (desplegado vía Docker con volúmenes persistentes).
+* **Estructuras de Datos:** C (estándar C99/C11), Makefile, scripts de compilación cruzada.
+
+---
+
+## Requisitos Previos
+
+* [Node.js](https://nodejs.org/) (versión 18.x o superior)
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/) (con WSL 2 habilitado en Windows)
+* Compilador GCC / MinGW (si se van a compilar y ejecutar los módulos nativos de C)
+
+---
+
+## Guía de Instalación y Puesta en Marcha
+
+### 1. Clonar el repositorio
+```bash
+git clone [https://github.com/abelcutire/projectdb-sistema-hospitalario.git](https://github.com/abelcutire/projectdb-sistema-hospitalario.git)
+cd projectdb-sistema-hospitalario
+```
+
+### 2. Base de Datos (Docker)
+
+Levanta el contenedor de PostgreSQL con las extensiones personalizadas:
+
+```bash
+docker compose up -d --build
+
+```
+
+*El servicio quedará escuchando en `localhost:5432` con usuario `postgres` y contraseña `admin`.*
+
+---
+
+### 3. Configurar y Levantar el Backend
+
+Entra a la carpeta del backend e instala dependencias:
+
+```bash
+cd backend
+npm install
+
+```
+
+Crea o edita el archivo `.env` en `backend/.env`:
+
+```env
+PORT=3000
+DATABASE_URL="postgresql://postgres:admin@localhost:5432/postgres?schema=public"
+JWT_SECRET="tu_clave_secreta_jwt"
+# Opcional (para envío de correos de verificación reales):
+# BREVO_API_KEY="xkeysib-..."
+# EMAIL_FROM="no-reply@hospital.edu.pe"
+
+```
+
+Sincroniza el esquema con PostgreSQL y levanta el servidor en modo desarrollo:
+
+```bash
+npx prisma db push
+npx prisma generate
+npm run dev
+
+```
+
+*El backend iniciará en `http://localhost:3000`.*
+
+---
+
+### 4. Levantar el Frontend
+
+En una nueva terminal, navega a la carpeta `frontend`:
+
+```bash
+cd frontend
+npm install
+npm run dev
+
+```
+
+*La interfaz estará disponible en el navegador en `http://localhost:5173`.*
+
+---
+
+## Compilación y Pruebas del Módulo Nativo en C
+
+Para ejecutar las pruebas del T-Tree o correr el benchmark de estructuras:
+
+### T-Tree
+
+```bash
+cd ttree
+
+# En Linux/macOS:
+gcc -Wall -Wextra main.c ttree.c -o ttree_test
+./ttree_test
+
+# En Windows (PowerShell con MinGW o script dedicado):
+.\build.ps1
+
+```
+
+### Benchmark de Rendimiento
+
+```bash
+cd benchmark
+make
+./run_benchmark
+
+```
+
+---
+
+## Endpoints Principales de la API
+
+| Método | Endpoint | Descripción | Rol Mínimo |
+| --- | --- | --- | --- |
+| `POST` | `/api/auth/login` | Autenticación y retorno de JWT | Público |
+| `POST` | `/api/auth/register-patient` | Solicitud de registro con OTP | Público |
+| `GET` | `/api/citas` | Listado general de citas | Personal Médico / Admin |
+| `POST` | `/api/citas` | Creación y agendamiento de cita | Paciente / Admin |
+| `GET` | `/api/pacientes` | Consulta de historias y datos de pacientes | Personal Clínico |
+| `GET` | `/api/farmacia/medicamentos` | Inventario y disponibilidad de fármacos | Personal / Farmacia |
+| `GET` | `/api/hospitalizacion/camillas` | Estado en tiempo real de camas hospitalarias | Médico / Enfermería |
+| `GET` | `/api/auditoria` | Registros de trazabilidad del sistema | Administrador |
