@@ -1,0 +1,4 @@
+# Archivos compilados de PostgreSQL
+*.o
+*.so
+*.bc
