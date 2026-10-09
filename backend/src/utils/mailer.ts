@@ -69,6 +69,9 @@ export const sendResetEmail = async (to: string, token: string) => {
 };
 
 export const sendOtpEmail = async (to: string, otp: string) => {
+  console.log(`\n==============================================`);
+  console.log(`🔑 CÓDIGO OTP PARA ${to}: [ ${otp} ]`);
+  console.log(`==============================================\n`);
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; text-align: center;">
       <h2 style="color: #3b82f6;">Verifica tu correo electrónico</h2>
