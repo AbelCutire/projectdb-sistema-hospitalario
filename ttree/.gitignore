@@ -1,6 +1,0 @@
-# Ejecutable compilado (se regenera con .\build.ps1)
-ttree.exe
-ttree
-
-# Directorio de build si se usa el Makefile en Linux
-build/
