@@ -1,0 +1,4 @@
+comment = 'Implementacion de T-Tree en C'
+default_version = '1.0'
+module_pathname = '$libdir/t_tree'
+relocatable = true

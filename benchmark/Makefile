@@ -5,7 +5,7 @@
 CC      = gcc
 CFLAGS  = -std=c11 -Wall -Wextra -Wpedantic -O3 -I../ttree/src -I../btree/src
 
-SRC_TTREE = ../ttree/src/ttree.c
+SRC_TTREE = ../ttree/ttree.c
 SRC_BTREE = ../btree/src/btree.c
 SRC_BENCH = benchmark.c
 
