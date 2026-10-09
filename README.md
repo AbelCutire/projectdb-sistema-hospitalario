@@ -85,6 +85,7 @@ projectdb-sistema-hospitalario/
 git clone [https://github.com/abelcutire/projectdb-sistema-hospitalario.git](https://github.com/abelcutire/projectdb-sistema-hospitalario.git)
 cd projectdb-sistema-hospitalario
 ```
+---
 
 ### 2. Base de Datos (Docker)
 
