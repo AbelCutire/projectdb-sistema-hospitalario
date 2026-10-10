@@ -1,0 +1,10 @@
+.git
+.gitignore
+node_modules
+*/node_modules
+dist
+*/dist
+experiments/workloads
+experiments/results/raw.csv
+.env
+.env.*
