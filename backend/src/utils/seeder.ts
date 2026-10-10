@@ -6,6 +6,32 @@ export async function runSeeder() {
   try {
     console.log('🔍 Checking database for seeding...');
 
+    // 0. Seed Roles and Departamentos
+    const rolCount = await prisma.rol.count();
+    if (rolCount === 0) {
+      console.log('🌱 Seeding roles...');
+      await prisma.rol.createMany({
+        data: [
+          { id_rol: 1, nombre_rol: 'Administrador', descripcion: 'Acceso total al sistema' },
+          { id_rol: 2, nombre_rol: 'Paciente', descripcion: 'Portal del paciente' },
+          { id_rol: 3, nombre_rol: 'Doctor', descripcion: 'Gestión clínica y citas' },
+          { id_rol: 4, nombre_rol: 'Enfermera', descripcion: 'Gestión hospitalaria y triaje' },
+        ]
+      });
+    }
+
+    const depCount = await prisma.departamento.count();
+    if (depCount === 0) {
+      console.log('🌱 Seeding departamentos...');
+      await prisma.departamento.createMany({
+        data: [
+          { id_departamento: 1, nombre: 'Cardiología', ubicacion: 'Piso 2 - Ala Norte' },
+          { id_departamento: 2, nombre: 'Medicina General', ubicacion: 'Piso 1 - Ala Sur' },
+          { id_departamento: 3, nombre: 'Pediatría', ubicacion: 'Piso 1 - Ala Este' }
+        ]
+      });
+    }
+
     // 1. Seed Farmacia
     const farmaciaCount = await prisma.farmacia.count();
     if (farmaciaCount === 0) {

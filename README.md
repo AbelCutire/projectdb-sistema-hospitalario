@@ -8,7 +8,7 @@ Sistema integral para la administración clínica, farmacéutica y operativa de 
 
 ### Requisitos Previos
 * [Docker Desktop](https://www.docker.com/products/docker-desktop/) (con Docker Compose v2)
-* Puertos disponibles en tu máquina host: `5173` (Frontend), `3000` (Backend), `5432` (PostgreSQL)
+* Puertos disponibles en la máquina host: `5173` (Frontend), `3000` (Backend), `5432` (PostgreSQL)
 
 ---
 
@@ -35,9 +35,10 @@ Este único comando automáticamente:
 | :--- | :--- | :--- | :--- |
 | **Frontend Web** | [http://localhost:5173](http://localhost:5173) | `5173` | Interfaz de usuario SPA (React 18 + Vite) |
 | **Backend API** | [http://localhost:3000](http://localhost:3000) | `3000` | API REST (Express + TypeScript + Prisma) |
+| **Health Check** | [http://localhost:3000/health](http://localhost:3000/health) | `3000` | Verificación de estado de la base de datos |
 | **PostgreSQL 18** | `localhost:5432` | `5432` | Base de datos con extensión T-Tree |
 
-*Credenciales por defecto de la base de datos:*
+*Credenciales por defecto de PostgreSQL:*
 * **Usuario:** `postgres`
 * **Contraseña:** `admin`
 * **Base de datos:** `postgres`
@@ -51,41 +52,52 @@ Para detener todos los servicios:
 docker compose down
 ```
 
-Para detener y limpiar volúmenes de datos:
+Para detener y limpiar volúmenes de datos persistentes:
 ```bash
 docker compose down -v
 ```
 
 ---
 
-## 🌳 Extensión T-Tree en PostgreSQL
+## 🧪 Pruebas y Verificación
 
-El proyecto incluye una extensión nativa en C ubicada en `backend/extension/` que implementa un **T-Tree** en memoria (balanceo AVL con nodos multi-clave).
+### 1. Probar el Índice T-Tree en PostgreSQL
+Puedes conectarte a la base de datos interactiva dentro del contenedor:
 
-### Funciones SQL Disponibles
+```bash
+docker exec -it bd-parcial psql -U postgres -d postgres
+```
+
+Dentro de `psql`, puedes crear una tabla de prueba y verificar el uso del índice nativo `ttree`:
+
 ```sql
--- Limpiar el árbol global en memoria
-SELECT ttree_limpiar();
+-- 1. Crear tabla con datos de prueba
+CREATE TABLE prueba_t (id serial primary key, codigo int);
+INSERT INTO prueba_t (codigo) SELECT (random() * 1000000)::int FROM generate_series(1, 100000);
 
--- Insertar una clave entera
-SELECT ttree_insertar(10500);
+-- 2. Crear el índice T-Tree nativo
+CREATE INDEX idx_prueba_ttree ON prueba_t USING ttree (codigo);
 
--- Buscar una clave
-SELECT ttree_buscar(10500);
+-- 3. Verificar que PostgreSQL utiliza el índice en el plan de ejecución
+EXPLAIN ANALYZE SELECT * FROM prueba_t WHERE codigo = 50000;
+
+-- 4. Limpiar tabla de prueba
+DROP TABLE prueba_t;
+\q
 ```
 
 ---
 
-## 📊 Benchmarks y Experimentación
-
-### 1. Validación rápida (Backend TypeScript)
-Con los contenedores activos:
+### 2. Benchmark Rápido (Backend TypeScript)
+Con los contenedores activos, corre la comparación automatizada entre escaneo secuencial e índice en base de datos:
 ```bash
 docker compose exec backend npm run benchmark
 ```
 
-### 2. Suite Formal de Experimentación (`experiments/`)
-Para reproducir la batería científica completa (Seq-Scan vs B-Tree vs T-Tree hasta 2M de registros):
+---
+
+### 3. Suite Formal de Experimentación (`experiments/`)
+Para reproducir la batería científica completa (Seq-Scan vs B-Tree vs T-Tree en datasets de 100k hasta 2M de registros):
 ```bash
 # 1. Generar cargas de trabajo D2
 python3 experiments/scripts/generate_data.py
@@ -93,4 +105,4 @@ python3 experiments/scripts/generate_data.py
 # 2. Ejecutar la suite de benchmark
 python3 experiments/scripts/run_benchmark.py
 ```
-*El informe completo con los resultados numéricos se encuentra en [`experiments/results/BENCHMARK_RESULTADOS.md`](file:///home/gillard/Proyectos/projectdb-sistema-hospitalario/experiments/results/BENCHMARK_RESULTADOS.md).*
+*El informe completo con los resultados se encuentra en [`experiments/results/BENCHMARK_RESULTADOS.md`](file:///home/gillard/Proyectos/projectdb-sistema-hospitalario/experiments/results/BENCHMARK_RESULTADOS.md).*
