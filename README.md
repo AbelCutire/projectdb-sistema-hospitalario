@@ -1,190 +1,96 @@
-# Sistema de Gestión Hospitalaria (EsSalud Premium Ultra Pro Max+)
+# Sistema de Gestión Hospitalaria con Índice T-Tree
 
-Plataforma integral para la administración clínica, farmacéutica y operativa de centros de salud. El sistema combina una arquitectura web moderna (React + Node.js/TypeScript + PostgreSQL con Prisma ORM) con implementaciones nativas en C de estructuras de datos avanzadas (**T-Tree** y **B-Tree**) para experimentación, benchmarking y optimización de índices en bases de datos orientadas a memoria (MMDB).
-
----
-
-## Características Principales
-
-### 1. Gestión Clínica y Operativa
-* **Control de Citas Médicas:** Programación, asignación de turnos, gestión de estados de consulta y vinculación con consultorios.
-* **Historial Clínico y Diagnósticos:** Registro centralizado de diagnósticos, emisión de recetas médicas y seguimiento de tratamientos.
-* **Farmacia e Inventario:** Control de catálogo farmacéutico (monodrogas, presentaciones, acciones terapéuticas) y supervisión de stock por almacén.
-* **Hospitalización:** Administración de salas, disponibilidad de camillas en tiempo real, ingresos y altas médicas.
-* **Gestión de Personal y Pacientes:** Mapeo de roles para personal administrativo, doctores, enfermeras, técnicos y pacientes con control de datos personales (DNI, contacto).
-
-### 2. Seguridad y Auditoría
-* **Autenticación y Autorización:** Control de acceso basado en roles (RBAC) con tokens JWT y verificación en dos pasos (OTP por correo vía Brevo).
-* **Módulo de Auditoría:** Registro transaccional de operaciones críticas para trazabilidad de cambios en base de datos.
-
-### 3. Motor de Indexación Nativo en C (Benchmarking MMDB)
-* **T-Tree (`/ttree`):** Estructura de indexación en memoria diseñada para bases de datos principales (Main Memory Databases), balanceada mediante rotaciones tipo AVL pero con nodos multi-clave.
-* **B-Tree (`/btree`):** Implementación de referencia orientada a bloques de disco para comparar costo computacional, fragmentación y tiempos de búsqueda.
-* **Módulo de Benchmark (`/benchmark`):** Rutinas en C para medir throughput de inserción, búsqueda puntual y recorridos por rango entre ambas estructuras.
+Sistema integral para la administración clínica, farmacéutica y operativa de centros de salud, que incorpora un motor de indexación nativo en C (**T-Tree**) integrado como extensión personalizada en **PostgreSQL 18** sobre infraestructura completamente contenedorizada con **Docker**.
 
 ---
 
-## Arquitectura del Proyecto
+## 🚀 Inicio Rápido con Docker (Un Solo Comando)
 
-```text
-projectdb-sistema-hospitalario/
-├── backend/                  # Servidor de API REST (Node.js + Express + TypeScript)
-│   ├── prisma/               # Esquema de base de datos (schema.prisma) y migraciones
-│   ├── src/
-│   │   ├── controllers/      # Lógica de negocio (citas, pacientes, farmacia, etc.)
-│   │   ├── middlewares/      # Seguridad, validación de JWT y roles
-│   │   ├── routes/           # Enrutamiento modular de la API
-│   │   └── utils/            # Servicios de correo (mailer), auditoría y seeders
-│   └── fix_*.ts              # Scripts de corrección y mantenimiento de secuencias
-│
-├── frontend/                 # Interfaz de usuario SPA (React 18 + Vite)
-│   ├── src/
-│   │   ├── components/       # Modales de acción, formularios y rutas protegidas
-│   │   ├── views/            # Vistas principales (Dashboard, Clínico, Farmacia, etc.)
-│   │   └── services/         # Cliente Axios configurado para consumo de la API
-│   └── vite.config.js
-│
-├── database/                 # Scripts DDL y consultas analíticas en PostgreSQL
-│   ├── schema/               # Definición modular de tablas (personas, citas, farmacia)
-│   ├── queries/              # Consultas complejas de reportes y analítica clínica
-│   └── insert/               # Poblado de datos iniciales para pruebas
-│
-├── ttree/                    # Implementación en C de estructura T-Tree
-│   ├── ttree.c / ttree.h     # Primitivas de inserción, balanceo y búsqueda
-│   └── DOCUMENTACION.md      # Análisis teórico y complejidad algorítmica
-│           
-├── benchmark/                # Pruebas comparativas de rendimiento en C
-├── Docker/                   # Entorno de contenedorización y extensiones C
-└── docker-compose.yml        # Orquestación del servicio PostgreSQL local
-```
-
-## Tecnologías Utilizadas
-
-* **Frontend:** React, Vite, Tailwind CSS / Vanilla CSS, Axios, Lucide Icons.
-* **Backend:** Node.js, Express, TypeScript, Prisma ORM, JWT, Bcrypt.
-* **Base de Datos:** PostgreSQL 16 (desplegado vía Docker con volúmenes persistentes).
-* **Estructuras de Datos:** C (estándar C99/C11), Makefile, scripts de compilación cruzada.
+### Requisitos Previos
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/) (con Docker Compose v2)
+* Puertos disponibles en tu máquina host: `5173` (Frontend), `3000` (Backend), `5432` (PostgreSQL)
 
 ---
 
-## Requisitos Previos
+### Iniciar Todo el Sistema
 
-* [Node.js](https://nodejs.org/) (versión 18.x o superior)
-* [Docker Desktop](https://www.docker.com/products/docker-desktop/) (con WSL 2 habilitado en Windows)
-* Compilador GCC / MinGW (si se van a compilar y ejecutar los módulos nativos de C)
-
----
-
-## Guía de Instalación y Puesta en Marcha
-
-### 1. Clonar el repositorio
-```bash
-git clone [https://github.com/abelcutire/projectdb-sistema-hospitalario.git](https://github.com/abelcutire/projectdb-sistema-hospitalario.git)
-cd projectdb-sistema-hospitalario
-```
----
-
-### 2. Base de Datos (Docker)
-
-Levanta el contenedor de PostgreSQL con las extensiones personalizadas:
+Ejecuta en la raíz del proyecto:
 
 ```bash
-docker compose up -d --build
-
+docker compose up --build
 ```
 
-*El servicio quedará escuchando en `localhost:5432` con usuario `postgres` y contraseña `admin`.*
+Este único comando automáticamente:
+1. Compila e instala la extensión nativa de C **T-Tree** dentro de la imagen de PostgreSQL 18.
+2. Inicia la base de datos PostgreSQL y habilita la extensión `t_tree`.
+3. Aplica las migraciones del esquema y ejecuta los seeders con Prisma ORM.
+4. Levanta el servidor API Backend en Node.js / Express con TypeScript.
+5. Levanta la aplicación web Frontend en React / Vite.
 
 ---
 
-### 3. Configurar y Levantar el Backend
+### URLs y Puertos de Acceso
 
-Entra a la carpeta del backend e instala dependencias:
+| Servicio | URL / Host | Puerto | Descripción |
+| :--- | :--- | :--- | :--- |
+| **Frontend Web** | [http://localhost:5173](http://localhost:5173) | `5173` | Interfaz de usuario SPA (React 18 + Vite) |
+| **Backend API** | [http://localhost:3000](http://localhost:3000) | `3000` | API REST (Express + TypeScript + Prisma) |
+| **PostgreSQL 18** | `localhost:5432` | `5432` | Base de datos con extensión T-Tree |
 
-```bash
-cd backend
-npm install
-
-```
-
-Crea o edita el archivo `.env` en `backend/.env`:
-
-```env
-PORT=3000
-DATABASE_URL="postgresql://postgres:admin@localhost:5432/postgres?schema=public"
-JWT_SECRET="tu_clave_secreta_jwt"
-# Opcional (para envío de correos de verificación reales):
-# BREVO_API_KEY="xkeysib-..."
-# EMAIL_FROM="no-reply@hospital.edu.pe"
-
-```
-
-Sincroniza el esquema con PostgreSQL y levanta el servidor en modo desarrollo:
-
-```bash
-npx prisma db push
-npx prisma generate
-npm run dev
-
-```
-
-*El backend iniciará en `http://localhost:3000`.*
+*Credenciales por defecto de la base de datos:*
+* **Usuario:** `postgres`
+* **Contraseña:** `admin`
+* **Base de datos:** `postgres`
 
 ---
 
-### 4. Levantar el Frontend
+### Detener el Sistema
 
-En una nueva terminal, navega a la carpeta `frontend`:
-
+Para detener todos los servicios:
 ```bash
-cd frontend
-npm install
-npm run dev
-
+docker compose down
 ```
 
-*La interfaz estará disponible en el navegador en `http://localhost:5173`.*
-
----
-
-## Compilación y Pruebas del Módulo Nativo en C
-
-Para ejecutar las pruebas del T-Tree o correr el benchmark de estructuras:
-
-### T-Tree
-
+Para detener y limpiar volúmenes de datos:
 ```bash
-cd ttree
-
-# En Linux/macOS:
-gcc -Wall -Wextra main.c ttree.c -o ttree_test
-./ttree_test
-
-# En Windows (PowerShell con MinGW o script dedicado):
-.\build.ps1
-
-```
-
-### Benchmark de Rendimiento
-
-```bash
-cd benchmark
-make
-./run_benchmark
-
+docker compose down -v
 ```
 
 ---
 
-## Endpoints Principales de la API
+## 🌳 Extensión T-Tree en PostgreSQL
 
-| Método | Endpoint | Descripción | Rol Mínimo |
-| --- | --- | --- | --- |
-| `POST` | `/api/auth/login` | Autenticación y retorno de JWT | Público |
-| `POST` | `/api/auth/register-patient` | Solicitud de registro con OTP | Público |
-| `GET` | `/api/citas` | Listado general de citas | Personal Médico / Admin |
-| `POST` | `/api/citas` | Creación y agendamiento de cita | Paciente / Admin |
-| `GET` | `/api/pacientes` | Consulta de historias y datos de pacientes | Personal Clínico |
-| `GET` | `/api/farmacia/medicamentos` | Inventario y disponibilidad de fármacos | Personal / Farmacia |
-| `GET` | `/api/hospitalizacion/camillas` | Estado en tiempo real de camas hospitalarias | Médico / Enfermería |
-| `GET` | `/api/auditoria` | Registros de trazabilidad del sistema | Administrador |
+El proyecto incluye una extensión nativa en C ubicada en `backend/extension/` que implementa un **T-Tree** en memoria (balanceo AVL con nodos multi-clave).
+
+### Funciones SQL Disponibles
+```sql
+-- Limpiar el árbol global en memoria
+SELECT ttree_limpiar();
+
+-- Insertar una clave entera
+SELECT ttree_insertar(10500);
+
+-- Buscar una clave
+SELECT ttree_buscar(10500);
+```
+
+---
+
+## 📊 Benchmarks y Experimentación
+
+### 1. Validación rápida (Backend TypeScript)
+Con los contenedores activos:
+```bash
+docker compose exec backend npm run benchmark
+```
+
+### 2. Suite Formal de Experimentación (`experiments/`)
+Para reproducir la batería científica completa (Seq-Scan vs B-Tree vs T-Tree hasta 2M de registros):
+```bash
+# 1. Generar cargas de trabajo D2
+python3 experiments/scripts/generate_data.py
+
+# 2. Ejecutar la suite de benchmark
+python3 experiments/scripts/run_benchmark.py
+```
+*El informe completo con los resultados numéricos se encuentra en [`experiments/results/BENCHMARK_RESULTADOS.md`](file:///home/gillard/Proyectos/projectdb-sistema-hospitalario/experiments/results/BENCHMARK_RESULTADOS.md).*
