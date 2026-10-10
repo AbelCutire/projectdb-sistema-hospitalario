@@ -1,0 +1,57 @@
+# Dependencias
+node_modules/
+package-lock.json
+!backend/package-lock.json
+!frontend/package-lock.json
+
+# Variables de entorno
+.env
+.env.local
+.env.*.local
+*.env
+
+# Builds y artefactos compilados (Frontend / Backend)
+dist/
+dist
+build/
+.cache/
+
+# Artefactos compilados C / PostgreSQL
+*.o
+*.so
+*.bc
+*.a
+*.out
+
+# Prisma y Base de datos
+/generated/prisma
+pgdata/
+*.dump
+*.sql.bak
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python y Entornos Virtuales
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+.pytest_cache/
+
+# Editores y Sistema Operativo
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.bak
+*.orig
