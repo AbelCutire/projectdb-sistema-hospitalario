@@ -52,10 +52,7 @@ projectdb-sistema-hospitalario/
 ├── ttree/                    # Implementación en C de estructura T-Tree
 │   ├── ttree.c / ttree.h     # Primitivas de inserción, balanceo y búsqueda
 │   └── DOCUMENTACION.md      # Análisis teórico y complejidad algorítmica
-│
-├── btree/                    # Implementación en C de estructura B-Tree
-│   └── src/                  # Código fuente del árbol y pruebas unitarias
-│
+│           
 ├── benchmark/                # Pruebas comparativas de rendimiento en C
 ├── Docker/                   # Entorno de contenedorización y extensiones C
 └── docker-compose.yml        # Orquestación del servicio PostgreSQL local
