@@ -287,12 +287,7 @@ def write_report():
 
     L("# Resultados del Benchmark: T-Tree vs B-tree vs Sin Índice")
     L("")
-    L("> **Declaración IA**: Este benchmark fue diseñado, ejecutado y documentado")
-    L("> con asistencia de inteligencia artificial (Antigravity/Google DeepMind),")
-    L("> bajo supervisión del autor. Todos los datos numéricos provienen de ejecuciones")
-    L("> reales registradas en el log de la tarea. Ningún valor fue inventado,")
-    L("> estimado ni extrapolado.")
-    L("")
+
     L(f"**Inicio ejecución**: 2026-10-09T10:56:26-05:00  ")
     L(f"**Fin ejecución**: 2026-10-10T03:20:56-05:00  ")
     L(f"**Duración total**: ~16 h 24 min")

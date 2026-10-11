@@ -456,12 +456,12 @@ DROP TABLE IF EXISTS w3_keys CASCADE;
 DROP TABLE IF EXISTS w1_keys_small CASCADE;
 DROP TABLE IF EXISTS w2_keys_small CASCADE;
 
-CREATE TEMP TABLE data_load (id integer);
-CREATE TEMP TABLE w1_keys (key integer);
-CREATE TEMP TABLE w2_keys (key integer);
-CREATE TEMP TABLE w3_keys (key integer);
-CREATE TEMP TABLE w1_keys_small (key integer);
-CREATE TEMP TABLE w2_keys_small (key integer);
+CREATE UNLOGGED TABLE data_load (id integer);
+CREATE UNLOGGED TABLE w1_keys (key integer);
+CREATE UNLOGGED TABLE w2_keys (key integer);
+CREATE UNLOGGED TABLE w3_keys (key integer);
+CREATE UNLOGGED TABLE w1_keys_small (key integer);
+CREATE UNLOGGED TABLE w2_keys_small (key integer);
 
 COPY data_load(id) FROM '/tmp/bench_data_D2_N{n}.csv' CSV HEADER;
 COPY w1_keys(key) FROM '/tmp/bench_w1_hits_N{n}.csv' CSV HEADER;
@@ -506,12 +506,24 @@ def collect_env_info() -> dict:
     info["max_parallel_workers"] = parts[5] if len(parts) > 5 else "?"
 
     # CPU info
-    result = subprocess.run(["lscpu"], capture_output=True, text=True)
-    info["lscpu"] = result.stdout
+    try:
+        if os.name == 'nt':
+            result = subprocess.run(["wmic", "cpu", "get", "name"], capture_output=True, text=True)
+        else:
+            result = subprocess.run(["lscpu"], capture_output=True, text=True)
+        info["lscpu"] = result.stdout
+    except FileNotFoundError:
+        info["lscpu"] = "No disponible en Windows"
 
     # RAM
-    result = subprocess.run(["free", "-h"], capture_output=True, text=True)
-    info["free_h"] = result.stdout
+    try:
+        if os.name == 'nt':
+            result = subprocess.run(["wmic", "OS", "get", "FreePhysicalMemory,TotalVisibleMemorySize"], capture_output=True, text=True)
+        else:
+            result = subprocess.run(["free", "-h"], capture_output=True, text=True)
+        info["free_h"] = result.stdout
+    except FileNotFoundError:
+        info["free_h"] = "No disponible en Windows"
 
     # Container limits
     out2, _, _ = run_session_sql(f"{SESSION_CONFIG}\nSELECT pg_backend_pid();")
@@ -1029,8 +1041,8 @@ $$;
 
     # ── Escribir raw.csv ──────────────────────────────────────────────────────
     log(f"\nEscribiendo {RAW_CSV}...")
-    with open(RAW_CSV, "w", newline="") as f:
-        writer = csv.writer(f)
+    with open(RAW_CSV, "w", newline="", encoding="utf-8-sig") as f:
+        writer = csv.writer(f, delimiter=';')
         writer.writerow(RAW_HEADER)
         for row in raw_rows:
             writer.writerow(row)
@@ -1120,11 +1132,7 @@ def generate_report(raw_rows, env, loop_oh, explain_btree, explain_noindex):
 
     L("# Resultados del Benchmark: T-Tree vs B-tree vs Sin Índice")
     L("")
-    L("> **Declaración IA**: Este benchmark fue diseñado, ejecutado y documentado")
-    L("> con asistencia de inteligencia artificial (Antigravity/Google DeepMind),")
-    L("> bajo supervisión del autor. Todos los datos provienen de ejecuciones reales;")
-    L("> ningún valor fue inventado, estimado ni extrapolado.")
-    L("")
+
     L(f"**Fecha de ejecución**: {TIMESTAMP_RUN}")
     L("")
 

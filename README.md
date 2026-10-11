@@ -97,12 +97,25 @@ docker compose exec backend npm run benchmark
 ---
 
 ### 3. Suite Formal de Experimentación (`experiments/`)
-Para reproducir la batería científica completa (Seq-Scan vs B-Tree vs T-Tree en datasets de 100k hasta 2M de registros):
+
+Para asegurar la validez metodológica y el rigor estadístico de los resultados presentados, el proyecto incluye una suite de experimentación automatizada. Esta herramienta evalúa el rendimiento algorítmico frente a diferentes cardinalidades de datos ($N = \{10^5, 5 \times 10^5, 10^6, 2 \times 10^6\}$ registros) contrastando tres arquitecturas de acceso:
+
+1. **Sin Índice (Sequential Scan):** Actúa como línea base (*baseline*) algorítmica, demostrando la complejidad $\mathcal{O}(N)$ característica de un escaneo en bloque (heap scan) sobre la estructura de datos.
+2. **PostgreSQL B-Tree:** La estructura de acceso secuencial estándar y altamente optimizada en disco de PostgreSQL. Representa el estándar de la industria ($\mathcal{O}(\log N)$).
+3. **Estructura Propia T-Tree:** La implementación propuesta de árbol en memoria (en C puro). Concebida específicamente para maximizar la localidad de caché y reducir la latencia de acceso en entornos de memoria principal.
+
+**Metodología de Cargas de Trabajo (Workloads):**
+La ejecución se somete a tres paradigmas operacionales de acceso estandarizados:
+* **W1 (Búsquedas Exitosas / *Hits*):** Evalúa los tiempos de latencia durante la recuperación de llaves existentes.
+* **W2 (Búsquedas No Exitosas / *Misses*):** Someter a estrés la estructura mediante búsquedas exhaustivas que invariablemente recaen en condiciones de fallo (llaves inexistentes), forzando el recorrido de máxima profundidad.
+* **W3 (Inserciones Dinámicas):** Cuantifica el *overhead* de mantenimiento del árbol y los ciclos de asignación de memoria durante operaciones DML masivas.
+
+Para reproducir la batería científica completa:
 ```bash
-# 1. Generar cargas de trabajo D2
+# 1. Generar cargas de trabajo D2 y conjuntos vectorizados
 python3 experiments/scripts/generate_data.py
 
-# 2. Ejecutar la suite de benchmark
+# 2. Ejecutar el orquestador de benchmark
 python3 experiments/scripts/run_benchmark.py
 ```
-*El informe completo con los resultados se encuentra en [`experiments/results/BENCHMARK_RESULTADOS.md`](file:///home/gillard/Proyectos/projectdb-sistema-hospitalario/experiments/results/BENCHMARK_RESULTADOS.md).*
+*El informe técnico consolidado (incluyendo tablas comparativas en formato Markdown) se genera de manera determinística en `experiments/results/BENCHMARK_RESULTADOS.md`.*
