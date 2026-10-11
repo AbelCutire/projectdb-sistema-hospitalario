@@ -1136,8 +1136,8 @@ def generate_report(raw_rows, env, loop_oh, explain_btree, explain_noindex):
     L(f"**Fecha de ejecución**: {TIMESTAMP_RUN}")
     L("")
 
-    # ── RESUMEN EJECUTIVO ─────────────────────────────────────────────────────
-    L("## 1. Resumen Ejecutivo")
+    # ── RESUMEN  ─────────────────────────────────────────────────────
+    L("## 1. Resumen de las comparaciones entre sin_indice, B-tree y T-tree")
     L("")
     L("El benchmark comparó tres escenarios sobre el dataset D2 (enteros aleatorios únicos,")
     L("semilla=42) en cuatro tamaños: N = 100 000, 500 000, 1 000 000 y 2 000 000.")
