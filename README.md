@@ -1,10 +1,10 @@
-# Sistema de Gestión Hospitalaria con Índice T-Tree
+# ***   Sistema de Gestión Hospitalaria con Índice T-Tree   ***
 
 Sistema integral para la administración clínica, farmacéutica y operativa de centros de salud, que incorpora un motor de indexación nativo en C (**T-Tree**) integrado como extensión personalizada en **PostgreSQL 18** sobre infraestructura completamente contenedorizada con **Docker**.
 
 ---
 
-## 🚀 Inicio Rápido con Docker (Un Solo Comando)
+## Inicio Rápido con Docker (Un Solo Comando)
 
 ### Requisitos Previos
 * [Docker Desktop](https://www.docker.com/products/docker-desktop/) (con Docker Compose v2)
@@ -59,7 +59,7 @@ docker compose down -v
 
 ---
 
-## 🧪 Pruebas y Verificación
+## Pruebas y Verificación
 
 ### 1. Probar el Índice T-Tree en PostgreSQL
 Puedes conectarte a la base de datos interactiva dentro del contenedor:
